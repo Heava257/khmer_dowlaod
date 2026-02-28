@@ -22,4 +22,5 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit for images
 });
 
-module.exports = upload;
+module.exports = { cloudinaryUpload: upload, cloudinary };
+破

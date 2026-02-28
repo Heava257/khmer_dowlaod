@@ -3,12 +3,20 @@ const router = express.Router();
 const Video = require('../models/Video');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const auth = require('../middleware/auth');
-const cloudinaryUpload = require('../middleware/cloudinary');
+const { cloudinary } = require('../middleware/cloudinary');
 
+// Ensure uploads directory exists
+const uploadDir = 'uploads';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
+
+// Disk storage for videos
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname));
@@ -30,54 +38,59 @@ router.get('/', async (req, res) => {
 });
 
 // Create new video - Protected
-router.post('/', auth, (req, res) => {
-    cloudinaryUpload.fields([{ name: 'thumbnail' }])(req, res, (err) => {
-        if (err) return res.status(400).json({ message: 'Thumbnail upload failed', error: err.message });
+router.post('/', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnail' }]), async (req, res) => {
+    try {
+        const { title, description, programId, externalVideoUrl } = req.body;
 
-        diskUpload.fields([{ name: 'video' }])(req, res, async (err) => {
-            if (err) return res.status(400).json({ message: 'Video upload failed', error: err.message });
+        let thumbnailUrl = '';
+        const videoUrl = req.files['video'] ? `/uploads/${req.files['video'][0].filename}` : '';
 
-            try {
-                const { title, description, programId, externalVideoUrl } = req.body;
-                const videoUrl = req.files['video'] ? `/uploads/${req.files['video'][0].filename}` : '';
-                const thumbnailUrl = req.files['thumbnail'] ? req.files['thumbnail'][0].path : '';
+        // Manually upload thumbnail to Cloudinary if it exists
+        if (req.files['thumbnail']) {
+            const thumbnailFile = req.files['thumbnail'][0];
+            const result = await cloudinary.uploader.upload(thumbnailFile.path, {
+                folder: 'khmer_download/thumbnails'
+            });
+            thumbnailUrl = result.secure_url;
+            // Optionally delete the local file
+            fs.unlinkSync(thumbnailFile.path);
+        }
 
-                const video = await Video.create({
-                    title, description, videoUrl, thumbnailUrl, programId, externalVideoUrl
-                });
-                res.status(201).json(video);
-            } catch (error) {
-                res.status(400).json({ message: error.message });
-            }
+        const video = await Video.create({
+            title, description, videoUrl, thumbnailUrl, programId, externalVideoUrl
         });
-    });
+        res.status(201).json(video);
+    } catch (error) {
+        console.error('Video Creation Error:', error);
+        res.status(400).json({ message: error.message });
+    }
 });
 
 // Update video - Protected
-router.put('/:id', auth, (req, res) => {
-    cloudinaryUpload.fields([{ name: 'thumbnail' }])(req, res, (err) => {
-        if (err) return res.status(400).json({ message: 'Thumbnail update failed', error: err.message });
+router.put('/:id', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnail' }]), async (req, res) => {
+    try {
+        const video = await Video.findByPk(req.params.id);
+        if (!video) return res.status(404).json({ message: 'Video not found' });
 
-        diskUpload.fields([{ name: 'video' }])(req, res, async (err) => {
-            if (err) return res.status(400).json({ message: 'Video update failed', error: err.message });
+        const { title, description, programId, externalVideoUrl } = req.body;
+        const updates = { title, description, programId, externalVideoUrl };
 
-            try {
-                const video = await Video.findByPk(req.params.id);
-                if (!video) return res.status(404).json({ message: 'Video not found' });
+        if (req.files['video']) updates.videoUrl = `/uploads/${req.files['video'][0].filename}`;
 
-                const { title, description, programId, externalVideoUrl } = req.body;
-                const updates = { title, description, programId, externalVideoUrl };
+        if (req.files['thumbnail']) {
+            const result = await cloudinary.uploader.upload(req.files['thumbnail'][0].path, {
+                folder: 'khmer_download/thumbnails'
+            });
+            updates.thumbnailUrl = result.secure_url;
+            fs.unlinkSync(req.files['thumbnail'][0].path);
+        }
 
-                if (req.files['video']) updates.videoUrl = `/uploads/${req.files['video'][0].filename}`;
-                if (req.files['thumbnail']) updates.thumbnailUrl = req.files['thumbnail'][0].path;
-
-                await video.update(updates);
-                res.json(video);
-            } catch (error) {
-                res.status(400).json({ message: error.message });
-            }
-        });
-    });
+        await video.update(updates);
+        res.json(video);
+    } catch (error) {
+        console.error('Video Update Error:', error);
+        res.status(400).json({ message: error.message });
+    }
 });
 
 // Delete video - Protected
@@ -93,3 +106,4 @@ router.post('/delete/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+破

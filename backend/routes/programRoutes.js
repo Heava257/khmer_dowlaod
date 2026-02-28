@@ -3,13 +3,20 @@ const router = express.Router();
 const Program = require('../models/Program');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const auth = require('../middleware/auth');
-const cloudinaryUpload = require('../middleware/cloudinary');
+const { cloudinary } = require('../middleware/cloudinary');
 
-// Multer Config for file uploads (Disk Storage for big files)
+// Ensure uploads directory exists
+const uploadDir = 'uploads';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
+
+// Disk storage for large program files
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname));
@@ -30,66 +37,70 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Create new program (with upload) - Protected
-router.post('/', auth, (req, res) => {
-    // 1. Upload settings to Cloudinary for icons (small images)
-    cloudinaryUpload.fields([{ name: 'icon' }])(req, res, (err) => {
-        if (err) return res.status(400).json({ message: 'Icon upload failed', error: err.message });
+// Create new program - Protected
+router.post('/', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), async (req, res) => {
+    try {
+        const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
 
-        // 2. Upload to Disk for the program file (big files)
-        diskUpload.fields([{ name: 'file' }])(req, res, async (err) => {
-            if (err) return res.status(400).json({ message: 'File upload failed', error: err.message });
+        let iconUrl = '';
+        const downloadUrl = req.files['file'] ? `/uploads/${req.files['file'][0].filename}` : '';
 
-            try {
-                const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
+        // Manually upload icon to Cloudinary if it exists
+        if (req.files['icon']) {
+            const iconFile = req.files['icon'][0];
+            const result = await cloudinary.uploader.upload(iconFile.path, {
+                folder: 'khmer_download/icons'
+            });
+            iconUrl = result.secure_url;
+            // Optionally delete the local file
+            fs.unlinkSync(iconFile.path);
+        }
 
-                const downloadUrl = req.files['file'] ? `/uploads/${req.files['file'][0].filename}` : '';
-                const iconUrl = req.files['icon'] ? req.files['icon'][0].path : '';
-
-                const program = await Program.create({
-                    title, description, category, version, downloadUrl, iconUrl,
-                    price: price || 0,
-                    isPaid: isPaid === 'true' || isPaid === true,
-                    externalDownloadUrl
-                });
-                res.status(201).json(program);
-            } catch (error) {
-                res.status(400).json({ message: error.message });
-            }
+        const program = await Program.create({
+            title, description, category, version, downloadUrl, iconUrl,
+            price: price || 0,
+            isPaid: isPaid === 'true' || isPaid === true,
+            externalDownloadUrl
         });
-    });
+        res.status(201).json(program);
+    } catch (error) {
+        console.error('Program Creation Error:', error);
+        res.status(400).json({ message: error.message });
+    }
 });
 
 // Update program - Protected
-router.put('/:id', auth, (req, res) => {
-    cloudinaryUpload.fields([{ name: 'icon' }])(req, res, (err) => {
-        if (err) return res.status(400).json({ message: 'Icon update failed', error: err.message });
+router.put('/:id', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), async (req, res) => {
+    try {
+        const program = await Program.findByPk(req.params.id);
+        if (!program) return res.status(404).json({ message: 'Program not found' });
 
-        diskUpload.fields([{ name: 'file' }])(req, res, async (err) => {
-            if (err) return res.status(400).json({ message: 'File update failed', error: err.message });
+        const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
+        const updates = {
+            title, description, category, version,
+            price: price || 0,
+            isPaid: isPaid === 'true' || isPaid === true,
+            externalDownloadUrl
+        };
 
-            try {
-                const program = await Program.findByPk(req.params.id);
-                if (!program) return res.status(404).json({ message: 'Program not found' });
+        if (req.files['file']) {
+            updates.downloadUrl = `/uploads/${req.files['file'][0].filename}`;
+        }
 
-                const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
-                const updates = {
-                    title, description, category, version,
-                    price: price || 0,
-                    isPaid: isPaid === 'true' || isPaid === true,
-                    externalDownloadUrl
-                };
+        if (req.files['icon']) {
+            const result = await cloudinary.uploader.upload(req.files['icon'][0].path, {
+                folder: 'khmer_download/icons'
+            });
+            updates.iconUrl = result.secure_url;
+            fs.unlinkSync(req.files['icon'][0].path);
+        }
 
-                if (req.files['file']) updates.downloadUrl = `/uploads/${req.files['file'][0].filename}`;
-                if (req.files['icon']) updates.iconUrl = req.files['icon'][0].path;
-
-                await program.update(updates);
-                res.json(program);
-            } catch (error) {
-                res.status(400).json({ message: error.message });
-            }
-        });
-    });
+        await program.update(updates);
+        res.json(program);
+    } catch (error) {
+        console.error('Program Update Error:', error);
+        res.status(400).json({ message: error.message });
+    }
 });
 
 // Delete program - Protected
@@ -105,3 +116,4 @@ router.post('/delete/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+破
