@@ -230,7 +230,7 @@ function App() {
 
                       <div className="program-icon">
                         {app.iconUrl ? (
-                          <img src={`${API_BASE_URL}${app.iconUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }} />
+                          <img src={app.iconUrl.startsWith('http') ? app.iconUrl : `${API_BASE_URL}${app.iconUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }} />
                         ) : (app.icon || '📦')}
                       </div>
                       <div className="program-name">{app.title}</div>
@@ -284,7 +284,7 @@ function App() {
                   </div>
                   <div className="program-icon" style={{ height: '160px', width: '100%', borderRadius: '18px' }}>
                     {v.thumbnailUrl ? (
-                      <img src={`${API_BASE_URL}${v.thumbnailUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }} />
+                      <img src={v.thumbnailUrl.startsWith('http') ? v.thumbnailUrl : `${API_BASE_URL}${v.thumbnailUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }} />
                     ) : (
                       <span style={{ fontSize: '4rem' }}>🎬</span>
                     )}
