@@ -4,7 +4,7 @@ const { sequelize } = require('../config/db');
 const Transaction = sequelize.define('Transaction', {
     id: {
         type: DataTypes.INTEGER,
-        primary_key: true,
+        primaryKey: true,
         autoIncrement: true,
     },
     billNumber: {
