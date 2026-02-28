@@ -15,6 +15,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [selectedItemForPayment, setSelectedItemForPayment] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -108,32 +109,39 @@ function App() {
 
   return (
     <div className="app-container">
-      <aside className="sidebar">
+      <button
+        className="mobile-toggle"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        {isSidebarOpen ? '✖️' : '☰'}
+      </button>
+
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="logo" onClick={() => { setCurrentView('home'); setActiveCategory('All'); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src="/logo.png" alt="" style={{ height: '35px', width: 'auto' }} />
           <span>KHMER DOWNLOAD</span>
         </div>
         <ul className="nav-links">
-          <li className={`nav-item ${currentView === 'home' && activeCategory === 'All' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('All'); }}>
+          <li className={`nav-item ${currentView === 'home' && activeCategory === 'All' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
             <span>🏠</span> Home
           </li>
 
           {user && (
-            <li className={`nav-item ${currentView === 'upload' ? 'active' : ''}`} onClick={() => { setCurrentView('upload'); setEditingItem(null); }}>
+            <li className={`nav-item ${currentView === 'upload' ? 'active' : ''}`} onClick={() => { setCurrentView('upload'); setEditingItem(null); setIsSidebarOpen(false); }}>
               <span>📤</span> Upload (Admin)
             </li>
           )}
 
-          <li className={`nav-item ${activeCategory === 'Programs' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('Programs'); }}>
+          <li className={`nav-item ${activeCategory === 'Programs' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('Programs'); setIsSidebarOpen(false); }}>
             <span>📦</span> Programs
           </li>
-          <li className={`nav-item ${activeCategory === 'Games' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('Games'); }}>
+          <li className={`nav-item ${activeCategory === 'Games' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('Games'); setIsSidebarOpen(false); }}>
             <span>🎮</span> Games
           </li>
-          <li className={`nav-item ${currentView === 'tutorials' ? 'active' : ''}`} onClick={() => { setCurrentView('tutorials'); setActiveCategory('All'); }}>
+          <li className={`nav-item ${currentView === 'tutorials' ? 'active' : ''}`} onClick={() => { setCurrentView('tutorials'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
             <span>🎥</span> Tutorials
           </li>
-          <li className={`nav-item ${currentView === 'contact' ? 'active' : ''}`} onClick={() => { setCurrentView('contact'); setActiveCategory('All'); }}>
+          <li className={`nav-item ${currentView === 'contact' ? 'active' : ''}`} onClick={() => { setCurrentView('contact'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
             <span>📞</span> Contact Us
           </li>
         </ul>
