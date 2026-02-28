@@ -14,6 +14,12 @@ const Feedback = sequelize.define('Feedback', {
         type: DataTypes.TEXT,
         allowNull: false,
     },
+    adminReply: {
+        type: DataTypes.TEXT,
+    },
+    replyDate: {
+        type: DataTypes.DATE,
+    },
     status: {
         type: DataTypes.ENUM('pending', 'resolved'),
         defaultValue: 'pending',

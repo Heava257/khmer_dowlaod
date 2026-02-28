@@ -320,9 +320,7 @@ function App() {
 
         {currentView === 'feedback' && (
           <section className="apps-section animate-fade-in" style={{ padding: '2rem 0' }}>
-            <FeedbackForm onSuccess={() => setCurrentView('home')} />
-
-            {user && <AdminFeedbackList />}
+            <FeedbackForm />
           </section>
         )}
 
