@@ -4,33 +4,58 @@ const Feedback = require('../models/Feedback');
 const auth = require('../middleware/auth');
 const { Op } = require('sequelize');
 
-// User submit feedback - Public
+// User or community submit feedback or user-to-user reply
 router.post('/', async (req, res) => {
     try {
-        const { name, contact, message } = req.body;
+        const { name, contact, message, parentId } = req.body;
         if (!name || !message) {
             return res.status(400).json({ message: 'Name and message are required' });
         }
-        const feedback = await Feedback.create({ name, contact: contact || 'N/A', message });
+
+        const feedback = await Feedback.create({
+            name,
+            contact: contact || 'N/A',
+            message,
+            parentId: parentId || null
+        });
         res.status(201).json(feedback);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// View all feedbacks - Publicly accessible for "Community view"
+// React (Like/Love) to a feedback
+router.post('/react/:id', async (req, res) => {
+    try {
+        const { type } = req.body; // 'like' or 'love'
+        const feedback = await Feedback.findByPk(req.params.id);
+        if (!feedback) return res.status(404).json({ message: 'Feedback not found' });
+
+        if (type === 'like') {
+            await feedback.increment('likes');
+        } else if (type === 'love') {
+            await feedback.increment('loves');
+        }
+
+        await feedback.reload();
+        res.json(feedback);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// View all feedbacks (Community view)
 router.get('/', async (req, res) => {
     try {
-        // If it's an admin, we show everything including contact
-        // We check token if provided
         const authHeader = req.headers['authorization'];
-        const isAdmin = !!authHeader; // Simple check for now, can use full auth middleware if preferred
+        const isAdmin = !!authHeader;
 
+        // Fetch everything, the frontend will handle nesting
         const feedbacks = await Feedback.findAll({
-            order: [['createdAt', 'DESC']],
+            order: [['createdAt', 'ASC']], // Oldest first to show chain
             attributes: isAdmin
-                ? undefined // Admin sees everything
-                : ['id', 'name', 'message', 'adminReply', 'replyDate', 'status', 'createdAt'] // Public sees these
+                ? undefined
+                : ['id', 'name', 'message', 'adminReply', 'replyDate', 'parentId', 'likes', 'loves', 'status', 'createdAt']
         });
         res.json(feedbacks);
     } catch (error) {
@@ -38,7 +63,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Admin Reply to feedback - Protected
+// Admin Reply (Official badge)
 router.put('/reply/:id', auth, async (req, res) => {
     try {
         const { adminReply } = req.body;
@@ -50,13 +75,13 @@ router.put('/reply/:id', auth, async (req, res) => {
             replyDate: new Date(),
             status: 'resolved'
         });
-        res.json({ message: 'Reply submitted', feedback });
+        res.json({ message: 'Official reply submitted', feedback });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Admin delete feedback - Protected
+// Delete feedback
 router.delete('/:id', auth, async (req, res) => {
     try {
         await Feedback.destroy({ where: { id: req.params.id } });

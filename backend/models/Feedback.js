@@ -7,7 +7,7 @@ const Feedback = sequelize.define('Feedback', {
         allowNull: false,
     },
     contact: {
-        type: DataTypes.STRING, // Telegram or Email
+        type: DataTypes.STRING,
         allowNull: false,
     },
     message: {
@@ -19,6 +19,18 @@ const Feedback = sequelize.define('Feedback', {
     },
     replyDate: {
         type: DataTypes.DATE,
+    },
+    parentId: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // If null, it's a main post. If set, it's a reply.
+    },
+    likes: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    },
+    loves: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
     },
     status: {
         type: DataTypes.ENUM('pending', 'resolved'),
