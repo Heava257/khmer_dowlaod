@@ -81,71 +81,154 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
 
     return (
         <div className="animate-fade-in" style={{
-            maxWidth: '550px',
+            maxWidth: '600px',
             margin: '2rem auto',
-            background: '#161b22',
+            background: 'rgba(22, 27, 34, 0.7)',
+            backdropFilter: 'blur(15px)',
             padding: '3rem',
-            borderRadius: '24px',
+            borderRadius: '32px',
             textAlign: 'center',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
-            border: '1px solid #30363d'
+            boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
+            border: '1px solid var(--border-color)',
+            position: 'relative',
+            overflow: 'hidden'
         }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '2rem' }}>
-                <img src="https://bakong.nbc.org.kh/assets/img/bakong-logo.png" alt="Bakong" style={{ height: '30px' }} />
-                <h2 style={{ color: '#fff', margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>Secure Checkout</h2>
+            {/* Background Glow */}
+            <div style={{
+                position: 'absolute',
+                top: '-50px',
+                right: '-50px',
+                width: '150px',
+                height: '150px',
+                background: 'var(--accent-color)',
+                filter: 'blur(100px)',
+                opacity: '0.2',
+                zIndex: -1
+            }}></div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '2.5rem' }}>
+                <img src="https://bakong.nbc.org.kh/assets/img/bakong-logo.png" alt="Bakong" style={{ height: '35px' }} />
+                <h2 style={{
+                    color: '#fff',
+                    margin: 0,
+                    fontSize: '1.8rem',
+                    fontWeight: '800',
+                    letterSpacing: '-0.5px'
+                }}>Secure Checkout</h2>
             </div>
 
-            <div style={{ marginBottom: '2.5rem' }}>
-                <p style={{ color: '#8b949e', fontSize: '0.9rem', marginBottom: '0.5rem' }}>MERCHANT: <span style={{ color: '#fff', fontWeight: 'bold' }}>PONG CHIVA (KHMER DOWNLOAD)</span></p>
-                <p style={{ color: '#8b949e', fontSize: '1.1rem' }}>Order Total: <strong style={{ color: '#f1c40f', fontSize: '1.8rem' }}>${item.price}</strong></p>
+            <div style={{
+                marginBottom: '2.5rem',
+                padding: '1.5rem',
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '20px',
+                border: '1px solid rgba(255,255,255,0.05)'
+            }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    Payment For: <span style={{ color: '#fff', fontWeight: 'bold' }}>{item.title}</span>
+                </p>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '8px' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>USD</span>
+                    <strong style={{
+                        color: '#f1c40f',
+                        fontSize: '3rem',
+                        fontWeight: '900',
+                        textShadow: '0 0 20px rgba(241, 196, 15, 0.3)'
+                    }}>${item.price}</strong>
+                </div>
             </div>
 
             <div style={{
                 background: '#fff',
-                padding: '1.5rem',
-                borderRadius: '20px',
+                padding: '1.8rem',
+                borderRadius: '24px',
                 display: 'inline-block',
                 position: 'relative',
                 marginBottom: '1.5rem',
-                boxShadow: '0 0 30px rgba(241, 196, 15, 0.2)'
+                boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
+                transform: 'translateZ(0)'
             }}>
                 {qrString ? (
-                    <QRCodeSVG value={qrString} size={280} level="H" includeMargin={true} />
+                    <QRCodeSVG value={qrString} size={260} level="H" includeMargin={true} />
                 ) : (
-                    <div style={{ width: '280px', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-                        Loading QR...
+                    <div style={{ width: '260px', height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
+                        <div className="loader" style={{ borderTopColor: '#000' }}></div>
                     </div>
                 )}
                 {isVerifying && (
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.9)', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-                        <div className="loader" style={{ borderTop: '3px solid #f1c40f' }}></div>
-                        <p style={{ marginTop: '1rem', color: '#000', fontWeight: 'bold' }}>Verifying Transaction...</p>
+                    <div style={{
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(255,255,255,0.95)',
+                        borderRadius: '24px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 20,
+                        backdropFilter: 'blur(2px)'
+                    }}>
+                        <div className="loader" style={{ borderTop: '4px solid #f1c40f', width: '50px', height: '50px' }}></div>
+                        <p style={{ marginTop: '1.5rem', color: '#000', fontWeight: '800', fontSize: '1.1rem' }}>VERIFYING BLOCKCHAIN...</p>
+                        <p style={{ color: '#666', fontSize: '0.8rem' }}>Please wait a few seconds</p>
                     </div>
                 )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8b949e', fontSize: '0.8rem', padding: '0 2rem', marginBottom: '2rem' }}>
-                <span>BILL: {billNumber}</span>
-                <span style={{ color: countdown < 30 ? '#ff7b72' : '#8b949e' }}>EXPIRES IN: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}</span>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                color: 'var(--text-secondary)',
+                fontSize: '0.85rem',
+                padding: '0 1rem',
+                marginBottom: '2rem',
+                fontWeight: '600'
+            }}>
+                <span>ID: {billNumber}</span>
+                <span style={{
+                    color: countdown < 30 ? '#ff7b72' : 'var(--text-secondary)',
+                    background: countdown < 30 ? 'rgba(255,123,114,0.1)' : 'transparent',
+                    padding: '2px 8px',
+                    borderRadius: '6px'
+                }}>
+                    TIMEOUT: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
+                </span>
             </div>
 
-            <div style={{ background: '#0d1117', padding: '1.5rem', borderRadius: '15px', textAlign: 'left', marginBottom: '2.5rem', border: '1px solid #30363d' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#238636', boxShadow: '0 0 10px #238636' }}></div>
-                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#fff' }}>Automatic Verification System</span>
+            <div style={{
+                background: 'rgba(13, 17, 23, 0.5)',
+                padding: '1.5rem',
+                borderRadius: '20px',
+                textAlign: 'left',
+                marginBottom: '2.5rem',
+                border: '1px solid var(--border-color)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div className="pulse-dot" style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#238636' }}></div>
+                    <span style={{ fontWeight: '800', fontSize: '0.95rem', color: '#fff', letterSpacing: '0.5px' }}>HOW TO PAY</span>
                 </div>
-                <p style={{ margin: 0, color: '#8b949e', fontSize: '0.85rem', lineHeight: '1.4' }}>
-                    1. Open any mobile banking app.<br />
-                    2. Scan this KHQR to pay <strong>${item.price}</strong>.<br />
-                    3. Click "Verify Payment" after completing the transfer.
-                </p>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                    <div style={{ marginBottom: '5px' }}>• Open <strong>ABA Mobile</strong> or any <strong>Bakong App</strong></div>
+                    <div style={{ marginBottom: '5px' }}>• Scan the KHQR to transfer <strong>${item.price}</strong></div>
+                    <div>• Press <strong>Verify Payment</strong> to unlock the download</div>
+                </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1.2rem' }}>
                 <button
-                    className="btn-primary"
+                    className="btn-secondary"
                     onClick={onCancel}
-                    style={{ flex: 1, background: 'transparent', border: '1px solid #30363d', color: '#8b949e' }}
+                    style={{
+                        flex: 1,
+                        padding: '1rem',
+                        borderRadius: '16px',
+                        border: '1px solid var(--border-color)',
+                        background: 'transparent',
+                        color: 'var(--text-secondary)',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s'
+                    }}
                 >
                     Cancel Order
                 </button>
@@ -153,9 +236,19 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
                     className="btn-primary"
                     onClick={handleVerify}
                     disabled={isVerifying}
-                    style={{ flex: 2, background: 'linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)', color: '#000', fontWeight: 'bold' }}
+                    style={{
+                        flex: 2,
+                        background: 'linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)',
+                        color: '#000',
+                        fontWeight: '900',
+                        fontSize: '1.1rem',
+                        borderRadius: '16px',
+                        boxShadow: '0 10px 25px rgba(241, 196, 15, 0.3)',
+                        border: 'none',
+                        cursor: 'pointer'
+                    }}
                 >
-                    {isVerifying ? 'Checking...' : 'Verify Payment ✅'}
+                    {isVerifying ? 'CHECKING...' : 'VERIFY PAYMENT ✅'}
                 </button>
             </div>
         </div>
