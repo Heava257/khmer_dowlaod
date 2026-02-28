@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Feedback = require('../models/Feedback');
-const { verifyToken } = require('./authRoutes');
+const auth = require('../middleware/auth');
 
 // User submit feedback
 router.post('/', async (req, res) => {
@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
 });
 
 // Admin view feedbacks
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', auth, async (req, res) => {
     try {
         const feedbacks = await Feedback.findAll({ order: [['createdAt', 'DESC']] });
         res.json(feedbacks);
@@ -25,7 +25,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // Admin update status
-router.put('/:id', verifyToken, async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
     try {
         const { status } = req.body;
         await Feedback.update({ status }, { where: { id: req.params.id } });
@@ -36,7 +36,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 });
 
 // Admin delete feedback
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
     try {
         await Feedback.destroy({ where: { id: req.params.id } });
         res.json({ message: 'Feedback deleted' });
