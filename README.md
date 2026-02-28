@@ -1,51 +1,42 @@
-# Khmer Download Website
+# Khmer Download Web Application
 
-A premium web application for downloading software and watching explanation videos.
+A professional software and video tutorial platform developed with Node.js/Express (Backend) and React (Frontend).
 
 ## Features
-- **Premium Dark Theme**: Sleek and modern UI inspired by top software platforms.
-- **Software Management**: Upload and download various programs and games.
-- **Video Tutorials**: Watch explanation videos for software installation and troubleshooting.
-- **Full Stack**: Built with Node.js (Express), MySQL (Sequelize), and React.
+- **Admin Panel**: Secure login for managing programs and videos.
+- **Upload/Edit/Delete**: Full CRUD functionality for admins.
+- **Dynamic KHQR Payment**: Integrated with Bakong KHQR for automatic payment generation and tracking.
+- **Instant Download**: Automated download process after successful payment verification.
+- **Premium Badge System**: Visual distinction between Free and Paid programs.
+- **Modern UI**: Styled with Vanilla CSS for a premium look.
 
-## Technology Stack
-- **Frontend**: React (Vite) + Vanilla CSS
-- **Backend**: Node.js + Express
-- **ORM**: Sequelize
-- **Database**: MySQL
+## Tech Stack
+- **Frontend**: React, Vite, qrcode.react, bakong-khqr.
+- **Backend**: Node.js, Express, Sequelize (MySQL), Multer (File Upload), JWT (Authentication).
+- **Database**: MySQL.
 
-## Setup Instructions
+## Getting Started
+### Prerequisites
+- Node.js & npm
+- MySQL
 
-### 1. Prerequisites
-- Node.js installed
-- MySQL Server installed and running
-
-### 2. Database Configuration
-1. Create a database named `khmer_download` in your MySQL server.
-2. Update the `.env` file in the `backend` folder with your MySQL credentials:
-   ```env
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASS=your_password
-   DB_NAME=khmer_download
+### Installation
+1. Clone the repository
+2. Set up the `.env` file in the `backend/` directory.
+3. Install dependencies:
+   ```bash
+   cd backend && npm install
+   cd ../frontend && npm install
+   ```
+4. Run the development servers:
+   ```bash
+   cd backend && node server.js
+   cd ../frontend && npm run dev
    ```
 
-### 3. Install Dependencies
-Run the following command in the root directory:
-```bash
-npm install
-cd backend && npm install
-cd ../frontend && npm install
-```
+## Merchant Information
+- **Merchant**: PONG CHIVA
+- **Account ID**: pong_chiva@bkrt
+- **Bank**: Bakong
 
-### 4. Run the Application
-In the root directory, run:
-```bash
-npm run dev
-```
-This will start both the backend server (port 5000) and the frontend dev server (port 5173) concurrently.
-
-## Project Structure
-- `/backend`: Express API, Sequelize models, and file upload logic.
-- `/frontend`: React application with premium styling.
-- `/uploads`: Directory where uploaded files and icons are stored.
+Developed by Antigravity (powered by Google DeepMind)
