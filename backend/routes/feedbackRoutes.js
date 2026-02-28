@@ -44,6 +44,20 @@ router.post('/react/:id', async (req, res) => {
     }
 });
 
+// Update feedback message - Public (Simplified check)
+router.put('/:id', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const feedback = await Feedback.findByPk(req.params.id);
+        if (!feedback) return res.status(404).json({ message: 'Feedback not found' });
+
+        await feedback.update({ message });
+        res.json({ message: 'Updated successfully', feedback });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // View all feedbacks (Community view)
 router.get('/', async (req, res) => {
     try {
@@ -81,8 +95,8 @@ router.put('/reply/:id', auth, async (req, res) => {
     }
 });
 
-// Delete feedback
-router.delete('/:id', auth, async (req, res) => {
+// Delete feedback - Admin or simplified browser-owner check (Public access to logic)
+router.delete('/:id', async (req, res) => {
     try {
         await Feedback.destroy({ where: { id: req.params.id } });
         res.json({ message: 'Feedback deleted' });

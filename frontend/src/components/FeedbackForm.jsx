@@ -14,11 +14,29 @@ function FeedbackForm() {
     const [replyingTo, setReplyingTo] = useState(null); // ID of feedback being replied to
     const [replyMessage, setReplyMessage] = useState('');
 
+    // User Edit State
+    const [editingId, setEditingId] = useState(null);
+    const [editingText, setEditingText] = useState('');
+
     // Admin state
     const [adminReplyText, setAdminReplyText] = useState({});
     const [showAdminReplyForm, setShowAdminReplyForm] = useState({});
 
+    // Local Storage Tracking
+    const [reactedIds, setReactedIds] = useState([]);
+    const [ownedIds, setOwnedIds] = useState([]);
+
     const isAdmin = !!localStorage.getItem('token');
+
+    useEffect(() => {
+        // Load local tracking on mount
+        const savedReacted = JSON.parse(localStorage.getItem('feedback_reacted') || '[]');
+        const savedOwned = JSON.parse(localStorage.getItem('feedback_owned') || '[]');
+        setReactedIds(savedReacted);
+        setOwnedIds(savedOwned);
+
+        fetchFeedbacks();
+    }, []);
 
     const fetchFeedbacks = async () => {
         try {
@@ -26,8 +44,6 @@ function FeedbackForm() {
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
             const response = await fetch(`${API_BASE_URL}/api/feedbacks`, { headers });
             const data = await response.json();
-            // Invert the order so latest main post is at top, but replies underneath.
-            // Since backend is oldest-first for chains, we'll sort carefully.
             setFeedbacks(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Fetch Feedbacks Error:', error);
@@ -36,9 +52,11 @@ function FeedbackForm() {
         }
     };
 
-    useEffect(() => {
-        fetchFeedbacks();
-    }, []);
+    const trackOwned = (id) => {
+        const newOwned = [...ownedIds, id];
+        setOwnedIds(newOwned);
+        localStorage.setItem('feedback_owned', JSON.stringify(newOwned));
+    };
 
     // Handle initial feedback post (Main post)
     const handleSubmitMain = async (e) => {
@@ -53,6 +71,8 @@ function FeedbackForm() {
             });
 
             if (response.ok) {
+                const data = await response.json();
+                trackOwned(data.id);
                 alert('មតិយោបល់របស់អ្នកត្រូវបានផ្ញើ!');
                 setName('');
                 setContact('');
@@ -74,7 +94,7 @@ function FeedbackForm() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: 'Community User', // Or prompt for name? For simplicity, we can just use "User"
+                    name: 'Community User',
                     contact: 'N/A',
                     message: replyMessage,
                     parentId: parentId
@@ -82,6 +102,8 @@ function FeedbackForm() {
             });
 
             if (response.ok) {
+                const data = await response.json();
+                trackOwned(data.id);
                 setReplyMessage('');
                 setReplyingTo(null);
                 fetchFeedbacks();
@@ -91,15 +113,45 @@ function FeedbackForm() {
         }
     };
 
+    // Edit message logic
+    const handleUpdate = async (id) => {
+        if (!editingText.trim()) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/feedbacks/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: editingText })
+            });
+            if (response.ok) {
+                setEditingId(null);
+                setEditingText('');
+                fetchFeedbacks();
+            }
+        } catch (error) {
+            console.error('Update Error:', error);
+        }
+    };
+
     // React to a feedback
     const handleReact = async (id, type) => {
+        const reactionKey = `${id}_${type}`;
+        if (reactedIds.includes(reactionKey)) {
+            alert('លោកអ្នកបាន Like/Love រួចហើយ!');
+            return;
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/api/feedbacks/react/${id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type })
             });
-            if (response.ok) fetchFeedbacks();
+            if (response.ok) {
+                const newReacted = [...reactedIds, reactionKey];
+                setReactedIds(newReacted);
+                localStorage.setItem('feedback_reacted', JSON.stringify(newReacted));
+                fetchFeedbacks();
+            }
         } catch (error) {
             console.error('Reaction Error:', error);
         }
@@ -134,7 +186,7 @@ function FeedbackForm() {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_BASE_URL}/api/feedbacks/${id}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
             if (response.ok) fetchFeedbacks();
         } catch (error) {
@@ -143,8 +195,8 @@ function FeedbackForm() {
     };
 
     const renderFeedbackItem = (fb, isReply = false) => {
-        // Find if this post has replies
         const children = feedbacks.filter(child => child.parentId === fb.id);
+        const isOwner = ownedIds.includes(fb.id);
 
         return (
             <div
@@ -173,18 +225,35 @@ function FeedbackForm() {
                     </div>
                 </div>
 
-                <p style={{ color: '#e5e7eb', fontSize: '0.95rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>{fb.message}</p>
+                {editingId === fb.id ? (
+                    <div style={{ marginTop: '0.5rem' }}>
+                        <textarea
+                            className="search-bar"
+                            style={{ width: '100%', minHeight: '80px' }}
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            <button onClick={() => handleUpdate(fb.id)} className="btn-primary" style={{ padding: '0.4rem 1rem' }}>Save</button>
+                            <button onClick={() => setEditingId(null)} className="btn-primary" style={{ background: '#374151' }}>Cancel</button>
+                        </div>
+                    </div>
+                ) : (
+                    <p style={{ color: '#e5e7eb', fontSize: '0.95rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>{fb.message}</p>
+                )}
 
                 {/* Reactions & Actions Row */}
-                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.8rem' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.8rem', flexWrap: 'wrap' }}>
                     <button
                         onClick={() => handleReact(fb.id, 'like')}
+                        className="reaction-btn"
                         style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '0.85rem' }}
                     >
                         👍 <span style={{ color: fb.likes > 0 ? 'var(--accent-color)' : 'inherit' }}>{fb.likes || 0}</span>
                     </button>
                     <button
                         onClick={() => handleReact(fb.id, 'love')}
+                        className="reaction-btn"
                         style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '0.85rem' }}
                     >
                         ❤️ <span style={{ color: fb.loves > 0 ? '#ff4f4f' : 'inherit' }}>{fb.loves || 0}</span>
@@ -195,10 +264,19 @@ function FeedbackForm() {
                     >
                         Reply
                     </button>
+
+                    {/* Owner Actions */}
+                    {isOwner && (
+                        <>
+                            <button onClick={() => { setEditingId(fb.id); setEditingText(fb.message); }} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}>Edit</button>
+                            <button onClick={() => handleDelete(fb.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}>Delete</button>
+                        </>
+                    )}
+
                     {isAdmin && (
                         <>
                             <button onClick={() => setShowAdminReplyForm({ ...showAdminReplyForm, [fb.id]: true })} style={{ background: 'transparent', border: 'none', color: '#f1c40f', cursor: 'pointer', fontSize: '0.85rem' }}>Admin Reply</button>
-                            <button onClick={() => handleDelete(fb.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}>Del</button>
+                            {!isOwner && <button onClick={() => handleDelete(fb.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}>Del</button>}
                         </>
                     )}
                 </div>
