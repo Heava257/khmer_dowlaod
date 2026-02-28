@@ -18,65 +18,33 @@ app.use((req, res, next) => {
 });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
-app.get('/', (req, res) => {
-    res.send('Khmer Download API is running...');
-});
+// Import Models & Routes
+const User = require('./models/User');
+const Program = require('./models/Program');
+const Video = require('./models/Video');
+const Transaction = require('./models/Transaction');
+const Feedback = require('./models/Feedback');
 
-// Import Routes
 const programRoutes = require('./routes/programRoutes');
 const videoRoutes = require('./routes/videoRoutes');
 const authRoutes = require('./routes/authRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
-const Transaction = require('./models/Transaction');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('./models/User');
+
+// Routes
+app.get('/', (req, res) => {
+    res.send('Khmer Download API is running...');
+});
 
 app.use('/api/programs', programRoutes);
 app.use('/api/videos', videoRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/feedbacks', feedbackRoutes);
-
-// Main Login Route (moved from authRoutes for debugging)
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        console.log('Login attempt for:', req.body.username);
-        const { username, password } = req.body;
-        const user = await User.findOne({ where: { username } });
-
-        if (!user) {
-            console.log('User not found');
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            console.log('Password mismatch');
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign(
-            { id: user.id, username: user.username, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: '1d' }
-        );
-
-        res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
-    } catch (error) {
-        console.error('LOGIN ERROR:', error.message);
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Using other auth routes (if any)
-app.use('/api/auth', authRoutes);
 
 // Error Handler
 app.use((err, req, res, next) => {
     console.error('Server Error:', err.message);
-    console.error(err.stack);
     res.status(500).json({ message: 'Internal Server Error', error: err.message });
 });
 
@@ -87,24 +55,29 @@ const startServer = async () => {
         await sequelize.sync({ alter: true });
         console.log('Database synced.');
 
-        // Auto-seed Admin if not exists
-        const adminExists = await User.findOne({ where: { username: 'admin' } });
+        // Auto-seed Admin
+        const bcrypt = require('bcryptjs');
+        const adminEmail = 'admin@khmerdownload.com';
+        const adminExists = await User.findOne({ where: { role: 'admin' } });
+
         if (!adminExists) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
             await User.create({
                 username: 'admin',
+                email: adminEmail,
                 password: hashedPassword,
-                role: 'admin'
+                role: 'admin',
+                isVerified: true
             });
-            console.log('Default admin created (admin / admin123)');
+            console.log('Default admin created (admin@khmerdownload.com / admin123)');
         }
-
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server running on port ${PORT}`);
-        });
     } catch (error) {
-        console.error('Failed to sync database:', error);
+        console.error('Failed during startup:', error);
     }
+
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server running on port ${PORT}`);
+    });
 };
 
 startServer();

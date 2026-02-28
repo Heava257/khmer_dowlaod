@@ -7,13 +7,29 @@ const User = sequelize.define('User', {
         allowNull: false,
         unique: true,
     },
-    password: {
+    email: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
+        validate: { isEmail: true }
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: true, // Allow null for social/OTP-only signup if needed
     },
     role: {
+        type: DataTypes.ENUM('admin', 'user'),
+        defaultValue: 'user',
+    },
+    isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+    otpCode: {
         type: DataTypes.STRING,
-        defaultValue: 'admin',
+    },
+    otpExpires: {
+        type: DataTypes.DATE,
     }
 });
 

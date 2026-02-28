@@ -28,6 +28,10 @@ const Transaction = sequelize.define('Transaction', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
+    userId: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Allow for guest-like initial recording
+    },
     customerName: {
         type: DataTypes.STRING,
         allowNull: true,
