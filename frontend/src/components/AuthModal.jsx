@@ -6,7 +6,6 @@ function AuthModal({ onClose, onLoginSuccess, onSwitchToAdmin }) {
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
-    const [debugOTP, setDebugOTP] = useState('');
     const [error, setError] = useState('');
 
     const handleRequestOTP = async (e) => {
@@ -21,10 +20,6 @@ function AuthModal({ onClose, onLoginSuccess, onSwitchToAdmin }) {
             });
             const data = await response.json();
             if (response.ok) {
-                if (data.debugCode) {
-                    setDebugOTP(data.debugCode);
-                    setError(data.message); // Show the "System is in TEST MODE" message
-                }
                 setStep(2);
             } else {
                 setError(data.message || 'Error sending OTP');
@@ -115,12 +110,6 @@ function AuthModal({ onClose, onLoginSuccess, onSwitchToAdmin }) {
                             required
                             autoFocus
                         />
-                        {debugOTP && (
-                            <div style={{ margin: '1rem 0', padding: '1rem', background: '#007aff1a', border: '1px dashed #007aff', borderRadius: '12px' }}>
-                                <p style={{ fontSize: '0.8rem', color: '#007aff', fontWeight: 'bold' }}>DEBUG CODE (Copy this):</p>
-                                <h1 style={{ letterSpacing: '8px', color: '#007aff', margin: '5px 0' }}>{debugOTP}</h1>
-                            </div>
-                        )}
                         <button className="buy-btn" disabled={loading} style={{ margin: 0 }}>
                             {loading ? 'Verifying...' : 'Sign In Now'}
                         </button>
