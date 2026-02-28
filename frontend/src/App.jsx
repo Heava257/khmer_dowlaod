@@ -271,21 +271,32 @@ function App() {
         {currentView === 'tutorials' && (
           <section className="apps-section animate-fade-in">
             <h3 className="grid-title">🎥 All Video Tutorials</h3>
-            <div className="programs-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+            <div className="programs-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
               {videos.map(v => (
-                <div key={v.id} className="program-card" style={{ padding: '1.5rem', textAlign: 'left' }}>
-                  <div className="program-name" style={{ fontSize: '1.2rem', color: 'var(--accent-color)' }}>{v.title}</div>
+                <div key={v.id} className="program-card" style={{ textAlign: 'left', alignItems: 'flex-start' }}>
+                  <div className="price-tag" style={{ background: '#ff0000' }}>
+                    YOUTUBE
+                  </div>
+                  <div className="program-icon" style={{ height: '160px', width: '100%', borderRadius: '18px' }}>
+                    {v.thumbnailUrl ? (
+                      <img src={`${API_BASE_URL}${v.thumbnailUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }} />
+                    ) : (
+                      <span style={{ fontSize: '4rem' }}>🎬</span>
+                    )}
+                  </div>
+                  <div className="program-name" style={{ color: 'var(--accent-color)' }}>{v.title}</div>
+                  <div className="program-meta" style={{ marginBottom: '1rem' }}>Official Guide</div>
 
                   {user && (
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                      <button onClick={() => startEdit(v)} style={{ flex: 1, padding: '0.4rem', borderRadius: '5px', border: '1px solid #58a6ff', background: 'transparent', color: '#58a6ff', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>
-                      <button onClick={() => deleteItem('video', v.id)} style={{ flex: 1, padding: '0.4rem', borderRadius: '5px', border: '1px solid #ff7b72', background: 'transparent', color: '#ff7b72', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', width: '100%' }}>
+                      <button onClick={() => startEdit(v)} style={{ flex: 1, padding: '0.4rem', borderRadius: '10px', border: '1px solid var(--accent-color)', background: 'transparent', color: 'var(--accent-color)', cursor: 'pointer', fontWeight: '600' }}>Edit</button>
+                      <button onClick={() => deleteItem('video', v.id)} style={{ flex: 1, padding: '0.4rem', borderRadius: '10px', border: '1px solid #ff7b72', background: 'transparent', color: '#ff7b72', cursor: 'pointer', fontWeight: '600' }}>Delete</button>
                     </div>
                   )}
 
                   <button
                     className="btn-primary"
-                    style={{ width: '100%', marginTop: '1rem' }}
+                    style={{ width: '100%', background: '#ff0000', filter: 'none' }}
                     onClick={() => {
                       if (v.externalVideoUrl) {
                         window.open(v.externalVideoUrl, '_blank');
@@ -294,7 +305,7 @@ function App() {
                       }
                     }}
                   >
-                    ▶️ Play Now
+                    📺 Watch on YouTube
                   </button>
                 </div>
               ))}

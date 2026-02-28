@@ -139,18 +139,18 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
 
                 <div>
                     <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                        🚀 External Storage Link (Cloudflare R2, Google Drive, etc.) - Optional
+                        {uploadType === 'program' ? '🚀 External Storage Link (Cloudflare R2, Drive, etc.)' : '📹 YouTube Video Link'}
                     </label>
                     <input
                         type="text"
                         className="search-bar"
                         style={{ width: '100%', borderRadius: '10px' }}
-                        placeholder="https://..."
+                        placeholder={uploadType === 'program' ? "https://pub-..." : "https://www.youtube.com/watch?v=..."}
                         value={externalUrl}
                         onChange={(e) => setExternalUrl(e.target.value)}
                     />
                     <p style={{ fontSize: '0.8rem', color: '#8b949e', marginTop: '0.5rem' }}>
-                        * ល្អបំផុតសម្រាប់ឯកសារធំៗ (SketchUp, Photoshop, ...)
+                        * {uploadType === 'program' ? 'ល្អបំផុតសម្រាប់ឯកសារធំៗ (SketchUp, Photoshop, ...)' : 'ដាក់ Link ពី Youtube ដើម្បីឱ្យ User ទស្សនាផ្ទាល់'}
                     </p>
                 </div>
 
