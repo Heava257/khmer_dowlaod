@@ -8,7 +8,7 @@ const auth = require('../middleware/auth');
 const { cloudinary } = require('../middleware/cloudinary');
 
 // Use absolute path for uploads to ensure consistency across environments
-const uploadDir = path.join(__dirname, '..', 'uploads');
+const uploadDir = path.resolve(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -42,33 +42,40 @@ router.get('/', async (req, res) => {
 router.post('/', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnail' }]), async (req, res) => {
     try {
         const { title, description, programId, externalVideoUrl } = req.body;
+        console.log('--- START VIDEO UPLOAD ---');
+        console.log('Body:', { title, programId, externalVideoUrl });
+        console.log('Files received:', Object.keys(req.files || {}));
 
-        let thumbnailsUrl = '';
+        let thumbnailUrl = '';
         let videoUrl = '';
 
         if (req.files && req.files['video']) {
             videoUrl = `/uploads/${req.files['video'][0].filename}`;
+            console.log('Video file saved to:', videoUrl);
         }
 
         // Manually upload thumbnail to Cloudinary if it exists
         if (req.files && req.files['thumbnail']) {
             const thumbnailFile = req.files['thumbnail'][0];
             const thumbPath = path.resolve(thumbnailFile.path);
+            console.log('Uploading Thumbnail to Cloudinary from:', thumbPath);
 
             try {
                 const result = await cloudinary.uploader.upload(thumbPath, {
                     folder: 'khmer_download/thumbnails',
                     resource_type: 'image'
                 });
-                thumbnailsUrl = result.secure_url;
+                thumbnailUrl = result.secure_url;
+                console.log('Cloudinary response:', result.secure_url);
 
                 // Clean up local thumbnail file after successful Cloudinary upload
                 if (fs.existsSync(thumbPath)) {
                     fs.unlinkSync(thumbPath);
                 }
             } catch (cloudErr) {
-                console.error('Cloudinary Upload Error:', cloudErr);
-                throw new Error('រូបភាព Thumbnail មិនអាចបង្ហោះបានទេ: ' + cloudErr.message);
+                console.error('CLOUDINARY ERROR OBJECT:', cloudErr);
+                const errorDetail = cloudErr.message || (typeof cloudErr === 'string' ? cloudErr : JSON.stringify(cloudErr));
+                throw new Error('រូបភាព Thumbnail មិនអាចបង្ហោះបានទេ (Cloudinary Error): ' + errorDetail);
             }
         }
 
@@ -76,16 +83,18 @@ router.post('/', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnail'
             title,
             description,
             videoUrl,
-            thumbnailUrl: thumbnailsUrl,
+            thumbnailUrl: thumbnailUrl,
             programId: programId || null,
             externalVideoUrl: externalVideoUrl || ''
         });
+
+        console.log('Video created successfully with ID:', video.id);
         res.status(201).json(video);
     } catch (error) {
-        console.error('Video Creation Error:', error);
+        console.error('CRITICAL VIDEO UPLOAD ERROR:', error);
         res.status(400).json({
             message: 'ការបង្ហោះវីដេអូបរាជ័យ: ' + error.message,
-            detail: error.stack
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -122,8 +131,9 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnai
                     fs.unlinkSync(thumbPath);
                 }
             } catch (cloudErr) {
-                console.error('Cloudinary Update Error:', cloudErr);
-                throw new Error('រូបភាព Thumbnail មិនអាច Update បានទេ: ' + cloudErr.message);
+                console.error('CLOUDINARY UPDATE ERROR:', cloudErr);
+                const errorDetail = cloudErr.message || (typeof cloudErr === 'string' ? cloudErr : JSON.stringify(cloudErr));
+                throw new Error('រូបភាព Thumbnail មិនអាច Update បានទេ: ' + errorDetail);
             }
         }
 
@@ -132,8 +142,7 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnai
     } catch (error) {
         console.error('Video Update Error:', error);
         res.status(400).json({
-            message: 'ការកែសម្រួលវីដេអូបរាជ័យ: ' + error.message,
-            detail: error.stack
+            message: 'ការកែសម្រួលវីដេអូបរាជ័យ: ' + error.message
         });
     }
 });

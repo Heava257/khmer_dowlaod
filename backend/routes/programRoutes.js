@@ -8,7 +8,7 @@ const auth = require('../middleware/auth');
 const { cloudinary } = require('../middleware/cloudinary');
 
 // Use absolute path for uploads to ensure consistency across environments
-const uploadDir = path.join(__dirname, '..', 'uploads');
+const uploadDir = path.resolve(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -25,7 +25,7 @@ const storage = multer.diskStorage({
 
 const diskUpload = multer({
     storage,
-    limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit for programs
+    limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit
 });
 
 // Get all programs
@@ -42,21 +42,23 @@ router.get('/', async (req, res) => {
 router.post('/', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), async (req, res) => {
     try {
         const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
-
-        // Basic log to debug fields
-        console.log('Creating program:', { title, isPaid, price });
+        console.log('--- START PROGRAM UPLOAD ---');
+        console.log('Body:', { title, category, price, isPaid });
+        console.log('Files received:', Object.keys(req.files || {}));
 
         let iconUrl = '';
         let downloadUrl = '';
 
         if (req.files && req.files['file']) {
             downloadUrl = `/uploads/${req.files['file'][0].filename}`;
+            console.log('Program file saved to:', downloadUrl);
         }
 
         // Manually upload icon to Cloudinary if it exists
         if (req.files && req.files['icon']) {
             const iconFile = req.files['icon'][0];
-            const iconPath = path.resolve(iconFile.path); // Use absolute path
+            const iconPath = path.resolve(iconFile.path);
+            console.log('Uploading Icon to Cloudinary from:', iconPath);
 
             try {
                 const result = await cloudinary.uploader.upload(iconPath, {
@@ -64,16 +66,16 @@ router.post('/', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), 
                     resource_type: 'image'
                 });
                 iconUrl = result.secure_url;
+                console.log('Cloudinary response:', result.secure_url);
 
                 // Clean up local icon file after successful Cloudinary upload
                 if (fs.existsSync(iconPath)) {
                     fs.unlinkSync(iconPath);
                 }
             } catch (cloudErr) {
-                console.error('Cloudinary Upload Error:', cloudErr);
-                // If cloudinary fails, we might still want to proceed or fail. 
-                // Let's fail for now to ensure consistency.
-                throw new Error('រូបភាព Icon មិនអាចបង្ហោះបានទេ: ' + cloudErr.message);
+                console.error('CLOUDINARY ERROR OBJECT:', cloudErr);
+                const errorDetail = cloudErr.message || (typeof cloudErr === 'string' ? cloudErr : JSON.stringify(cloudErr));
+                throw new Error('រូបភាព Icon មិនអាចបង្ហោះបានទេ (Cloudinary Error): ' + errorDetail);
             }
         }
 
@@ -89,12 +91,13 @@ router.post('/', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), 
             externalDownloadUrl: externalDownloadUrl || ''
         });
 
+        console.log('Program created successfully with ID:', program.id);
         res.status(201).json(program);
     } catch (error) {
-        console.error('Program Creation Error:', error);
+        console.error('CRITICAL UPLOAD ERROR:', error);
         res.status(400).json({
-            message: 'ការបង្ហោះបរាជ័យ (Failed): ' + error.message,
-            detail: error.stack
+            message: 'ការបង្ហោះបរាជ័យ: ' + error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -106,7 +109,6 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }])
         if (!program) return res.status(404).json({ message: 'Program not found' });
 
         const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
-
         const updates = {
             title,
             description,
@@ -135,8 +137,9 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }])
                     fs.unlinkSync(iconPath);
                 }
             } catch (cloudErr) {
-                console.error('Cloudinary Update Error:', cloudErr);
-                throw new Error('រូបភាព Icon មិនអាច Update បានទេ: ' + cloudErr.message);
+                console.error('CLOUDINARY UPDATE ERROR:', cloudErr);
+                const errorDetail = cloudErr.message || (typeof cloudErr === 'string' ? cloudErr : JSON.stringify(cloudErr));
+                throw new Error('រូបភាព Icon មិនអាច Update បានទេ: ' + errorDetail);
             }
         }
 
@@ -145,8 +148,7 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }])
     } catch (error) {
         console.error('Program Update Error:', error);
         res.status(400).json({
-            message: 'ការកែសម្រួលបរាជ័យ (Failed): ' + error.message,
-            detail: error.stack
+            message: 'ការកែសម្រួលបរាជ័យ: ' + error.message
         });
     }
 });
@@ -155,7 +157,7 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }])
 router.post('/delete/:id', auth, async (req, res) => {
     try {
         const program = await Program.findByPk(req.params.id);
-        if (!program) return res.status(404).json({ message: 'Program not found' });
+        if (!program) return res.status(404).json({ message: "Program not found" });
         await program.destroy();
         res.json({ message: 'Program deleted' });
     } catch (error) {
