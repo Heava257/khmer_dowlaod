@@ -6,10 +6,11 @@ require('dotenv').config();
 const { connectDB, sequelize } = require('./config/db');
 
 // Check Environment Variables
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('⚠️ WARNING: EMAIL_USER or EMAIL_PASS is not set. OTP features will fail.');
+const apiKey = process.env.RESEND_API_KEY || process.env.EMAIL_PASS;
+if (!apiKey || !apiKey.startsWith('re_')) {
+    console.warn('⚠️ WARNING: RESEND_API_KEY is not set or invalid. OTP features will fail.');
 } else {
-    console.log('✅ Email service configured for:', process.env.EMAIL_USER);
+    console.log('✅ Email service (Resend API) is configured.');
 }
 
 const app = express();

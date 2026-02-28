@@ -1,48 +1,35 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 require('dotenv').config();
+
+const resend = new Resend(process.env.RESEND_API_KEY || process.env.EMAIL_PASS);
 
 const sendEmail = async (to, subject, html) => {
     try {
-        const emailUser = process.env.EMAIL_USER?.trim();
-        const emailPass = process.env.EMAIL_PASS?.replace(/\s/g, '');
-
-        if (!emailUser || !emailPass) {
-            console.log('[EMAIL] ERROR: EMAIL_USER or EMAIL_PASS is missing in Railway Variables.');
-            return { success: false, message: 'Missing credentials' };
+        const apiKey = process.env.RESEND_API_KEY || process.env.EMAIL_PASS;
+        if (!apiKey || !apiKey.startsWith('re_')) {
+            console.error('[EMAIL] ERROR: Valid Resend API Key (re_...) is missing.');
+            return { success: false, message: 'Invalid or missing Resend API Key' };
         }
 
-        console.log(`[EMAIL] Starting transport to ${to} (User: ${emailUser})...`);
+        console.log(`[EMAIL] Sending via Resend API to: ${to}`);
 
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 465,
-            secure: true, // Use SSL for port 465
-            auth: {
-                user: emailUser,
-                pass: emailPass
-            },
-            // CRITICAL: Deep logging to see WHY it timeouts in Railway logs
-            logger: true,
-            debug: true,
-            connectionTimeout: 30000, // 30 seconds
-            greetingTimeout: 30000,
-            socketTimeout: 30000
-        });
-
-        const mailOptions = {
-            from: `"Khmer Download" <${emailUser}>`,
+        const { data, error } = await resend.emails.send({
+            from: 'Khmer Download <onboarding@resend.dev>', // You can use this for test
             to,
             subject,
             html
-        };
+        });
 
-        const result = await transporter.sendMail(mailOptions);
-        console.log(`[EMAIL] SENT SUCCESS! ID: ${result.messageId}`);
+        if (error) {
+            console.error('[RESEND ERROR]:', error.message);
+            return { success: false, message: error.message };
+        }
+
+        console.log(`[EMAIL] Sent successfully! ID: ${data.id}`);
         return { success: true };
     } catch (error) {
         console.error('[EMAIL FAIL]:', error.message);
-        // Include host/port in error to see what it attempted
-        return { success: false, message: `${error.message} (attempted smtp.gmail.com:465)` };
+        return { success: false, message: error.message };
     }
 };
 
