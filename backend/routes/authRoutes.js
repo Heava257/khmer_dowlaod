@@ -61,7 +61,14 @@ router.post('/request-otp', async (req, res) => {
             `<h3>Verification Code</h3><p>Your code is: <b>${otpCode}</b></p><p>Expires in 10 minutes.</p>`
         );
 
-        res.json({ message: 'OTP sent to your email', email });
+        // Debugging: If email is not configured, show code in JSON
+        const responseData = { message: 'OTP sent to your email', email };
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            responseData.debugCode = otpCode;
+            responseData.message = 'System is in TEST MODE - OTP displayed below for debugging';
+        }
+
+        res.json(responseData);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
