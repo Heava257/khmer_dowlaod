@@ -61,6 +61,12 @@ router.post('/request-otp', async (req, res) => {
             `<h3>Verification Code</h3><p>Your code is: <b>${otpCode}</b></p><p>Expires in 10 minutes.</p>`
         );
 
+        if (!emailSent) {
+            return res.status(500).json({
+                message: 'Failed to send verification email. Please check your Gmail App Password settings in Railway.'
+            });
+        }
+
         res.json({ message: 'OTP sent to your email', email });
     } catch (error) {
         res.status(500).json({ message: error.message });
