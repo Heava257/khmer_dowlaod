@@ -28,6 +28,7 @@ const programRoutes = require('./routes/programRoutes');
 const videoRoutes = require('./routes/videoRoutes');
 const authRoutes = require('./routes/authRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
 const Transaction = require('./models/Transaction');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -36,6 +37,7 @@ const User = require('./models/User');
 app.use('/api/programs', programRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/feedbacks', feedbackRoutes);
 
 // Main Login Route (moved from authRoutes for debugging)
 app.post('/api/auth/login', async (req, res) => {

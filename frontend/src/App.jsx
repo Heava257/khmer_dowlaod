@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
-import UploadForm from './components/UploadForm';
 import Login from './components/Login';
 import PaymentPage from './components/PaymentPage';
+import UploadForm from './components/UploadForm';
+import FeedbackForm from './components/FeedbackForm';
+import AdminFeedbackList from './components/AdminFeedbackList';
 import { API_BASE_URL } from './config';
 
 function App() {
@@ -142,6 +144,9 @@ function App() {
           <li className={`nav-item ${currentView === 'tutorials' ? 'active' : ''}`} onClick={() => { setCurrentView('tutorials'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
             🎥 Tutorials
           </li>
+          <li className={`nav-item ${currentView === 'feedback' ? 'active' : ''}`} onClick={() => { setCurrentView('feedback'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
+            💬 Feedback
+          </li>
           <li className={`nav-item ${currentView === 'contact' ? 'active' : ''}`} onClick={() => { setCurrentView('contact'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
             📞 Contact Us
           </li>
@@ -180,7 +185,7 @@ function App() {
             )}
           </div>
         </header>
-        破
+
         {currentView === 'login' && <Login onLoginSuccess={(u) => { setUser(u); setCurrentView('home'); }} />}
 
         {currentView === 'payment' && selectedItemForPayment && (
@@ -310,6 +315,14 @@ function App() {
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {currentView === 'feedback' && (
+          <section className="apps-section animate-fade-in" style={{ padding: '2rem 0' }}>
+            <FeedbackForm onSuccess={() => setCurrentView('home')} />
+
+            {user && <AdminFeedbackList />}
           </section>
         )}
 
