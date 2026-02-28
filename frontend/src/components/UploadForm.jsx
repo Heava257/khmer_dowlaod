@@ -35,6 +35,13 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
         formData.append('title', title);
         formData.append('description', description);
 
+        // Simple validation for new programs
+        if (uploadType === 'program' && !editItem && !file && !externalUrl) {
+            alert('សូមមេត្តាជ្រើសរើស File កម្មវិធី ឬដាក់ link ពី Cloudflare R2!');
+            setUploading(false);
+            return;
+        }
+
         let endpoint = `${API_BASE_URL}/api/${uploadType}s`;
         let method = 'POST';
 
@@ -219,7 +226,7 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                             <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
                                 Program File {(editItem || externalUrl) && '(Optional)'}
                             </label>
-                            <input type="file" onChange={(e) => setFile(e.target.files[0])} required={!editItem && !externalUrl} />
+                            <input type="file" onChange={(e) => setFile(e.target.files[0])} />
                         </div>
                     )}
                     <div style={{ flex: 1 }}>
