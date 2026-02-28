@@ -25,6 +25,9 @@ const Program = sequelize.define('Program', {
     iconUrl: {
         type: DataTypes.STRING,
     },
+    imageUrl: {
+        type: DataTypes.STRING,
+    },
     fileSize: {
         type: DataTypes.STRING,
     },

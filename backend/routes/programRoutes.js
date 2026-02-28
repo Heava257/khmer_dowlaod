@@ -28,6 +28,21 @@ const diskUpload = multer({
     limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit
 });
 
+// Helper for Cloudinary Upload
+const uploadToCloudinary = async (tempPath, folder) => {
+    try {
+        const result = await cloudinary.uploader.upload(tempPath, {
+            folder: `khmer_download/${folder}`,
+            resource_type: 'image'
+        });
+        if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+        return result.secure_url;
+    } catch (err) {
+        console.error(`Cloudinary Error (${folder}):`, err);
+        throw err;
+    }
+};
+
 // Get all programs
 router.get('/', async (req, res) => {
     try {
@@ -39,44 +54,27 @@ router.get('/', async (req, res) => {
 });
 
 // Create new program - Protected
-router.post('/', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), async (req, res) => {
+router.post('/', auth, diskUpload.fields([
+    { name: 'file' },
+    { name: 'icon' },
+    { name: 'banner' }
+]), async (req, res) => {
     try {
         const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
-        console.log('--- START PROGRAM UPLOAD ---');
-        console.log('Body:', { title, category, price, isPaid });
-        console.log('Files received:', Object.keys(req.files || {}));
-
         let iconUrl = '';
+        let imageUrl = '';
         let downloadUrl = '';
 
         if (req.files && req.files['file']) {
             downloadUrl = `/uploads/${req.files['file'][0].filename}`;
-            console.log('Program file saved to:', downloadUrl);
         }
 
-        // Manually upload icon to Cloudinary if it exists
         if (req.files && req.files['icon']) {
-            const iconFile = req.files['icon'][0];
-            const iconPath = path.resolve(iconFile.path);
-            console.log('Uploading Icon to Cloudinary from:', iconPath);
+            iconUrl = await uploadToCloudinary(req.files['icon'][0].path, 'icons');
+        }
 
-            try {
-                const result = await cloudinary.uploader.upload(iconPath, {
-                    folder: 'khmer_download/icons',
-                    resource_type: 'image'
-                });
-                iconUrl = result.secure_url;
-                console.log('Cloudinary response:', result.secure_url);
-
-                // Clean up local icon file after successful Cloudinary upload
-                if (fs.existsSync(iconPath)) {
-                    fs.unlinkSync(iconPath);
-                }
-            } catch (cloudErr) {
-                console.error('CLOUDINARY ERROR OBJECT:', cloudErr);
-                const errorDetail = cloudErr.message || (typeof cloudErr === 'string' ? cloudErr : JSON.stringify(cloudErr));
-                throw new Error('រូបភាព Icon មិនអាចបង្ហោះបានទេ (Cloudinary Error): ' + errorDetail);
-            }
+        if (req.files && req.files['banner']) {
+            imageUrl = await uploadToCloudinary(req.files['banner'][0].path, 'banners');
         }
 
         const program = await Program.create({
@@ -86,24 +84,24 @@ router.post('/', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), 
             version: version || '1.0',
             downloadUrl,
             iconUrl,
+            imageUrl,
             price: parseFloat(price) || 0,
             isPaid: String(isPaid) === 'true',
             externalDownloadUrl: externalDownloadUrl || ''
         });
 
-        console.log('Program created successfully with ID:', program.id);
         res.status(201).json(program);
     } catch (error) {
-        console.error('CRITICAL UPLOAD ERROR:', error);
-        res.status(400).json({
-            message: 'ការបង្ហោះបរាជ័យ: ' + error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        res.status(400).json({ message: error.message });
     }
 });
 
 // Update program - Protected
-router.put('/:id', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }]), async (req, res) => {
+router.put('/:id', auth, diskUpload.fields([
+    { name: 'file' },
+    { name: 'icon' },
+    { name: 'banner' }
+]), async (req, res) => {
     try {
         const program = await Program.findByPk(req.params.id);
         if (!program) return res.status(404).json({ message: 'Program not found' });
@@ -124,37 +122,22 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'file' }, { name: 'icon' }])
         }
 
         if (req.files && req.files['icon']) {
-            const iconFile = req.files['icon'][0];
-            const iconPath = path.resolve(iconFile.path);
+            updates.iconUrl = await uploadToCloudinary(req.files['icon'][0].path, 'icons');
+        }
 
-            try {
-                const result = await cloudinary.uploader.upload(iconPath, {
-                    folder: 'khmer_download/icons',
-                    resource_type: 'image'
-                });
-                updates.iconUrl = result.secure_url;
-                if (fs.existsSync(iconPath)) {
-                    fs.unlinkSync(iconPath);
-                }
-            } catch (cloudErr) {
-                console.error('CLOUDINARY UPDATE ERROR:', cloudErr);
-                const errorDetail = cloudErr.message || (typeof cloudErr === 'string' ? cloudErr : JSON.stringify(cloudErr));
-                throw new Error('រូបភាព Icon មិនអាច Update បានទេ: ' + errorDetail);
-            }
+        if (req.files && req.files['banner']) {
+            updates.imageUrl = await uploadToCloudinary(req.files['banner'][0].path, 'banners');
         }
 
         await program.update(updates);
         res.json(program);
     } catch (error) {
-        console.error('Program Update Error:', error);
-        res.status(400).json({
-            message: 'ការកែសម្រួលបរាជ័យ: ' + error.message
-        });
+        res.status(400).json({ message: error.message });
     }
 });
 
-// Delete program - Protected
-router.post('/delete/:id', auth, async (req, res) => {
+// Delete program - Protected (Changed to DELETE for standard)
+router.delete('/:id', auth, async (req, res) => {
     try {
         const program = await Program.findByPk(req.params.id);
         if (!program) return res.status(404).json({ message: "Program not found" });
