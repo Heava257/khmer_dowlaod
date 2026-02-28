@@ -14,7 +14,10 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit
+});
 
 // Get all programs
 router.get('/', async (req, res) => {
