@@ -5,6 +5,13 @@ const fs = require('fs');
 require('dotenv').config();
 const { connectDB, sequelize } = require('./config/db');
 
+// Check Environment Variables
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('⚠️ WARNING: EMAIL_USER or EMAIL_PASS is not set. OTP features will fail.');
+} else {
+    console.log('✅ Email service configured for:', process.env.EMAIL_USER);
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 

@@ -3,43 +3,37 @@ require('dotenv').config();
 
 const sendEmail = async (to, subject, html) => {
     try {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.log('[DEBUG] Email credentials missing. Logging to console instead.');
-            return true;
+        const emailUser = process.env.EMAIL_USER?.trim();
+        const emailPass = process.env.EMAIL_PASS?.replace(/\s/g, '');
+
+        if (!emailUser || !emailPass) {
+            console.log('[EMAIL] ERROR: Missing EMAIL_USER or EMAIL_PASS');
+            return { success: false, message: 'Missing credentials' };
         }
 
-        console.log(`[EMAIL] Initializing transport for ${to}...`);
+        console.log(`[EMAIL] Transport for ${to} using ${emailUser.substring(0, 2)}...`);
 
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // TLS
+            service: 'gmail',
             auth: {
-                user: process.env.EMAIL_USER.trim(),
-                pass: process.env.EMAIL_PASS.replace(/\s/g, '')
-            },
-            tls: {
-                // Do not fail on invalid certs
-                rejectUnauthorized: false
+                user: emailUser,
+                pass: emailPass
             }
         });
 
         const mailOptions = {
-            from: `"Khmer Download" <${process.env.EMAIL_USER.trim()}>`,
+            from: `"Khmer Download" <${emailUser}>`,
             to,
             subject,
             html
         };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log(`[EMAIL] Success: ${info.messageId}`);
-        return true;
+        const result = await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] Sent! ID: ${result.messageId}`);
+        return { success: true };
     } catch (error) {
-        console.error('[EMAIL ERROR]:', error.message);
-        if (error.code === 'EAUTH') {
-            console.error('[EMAIL ERROR] Authentication failed. Check your App Password.');
-        }
-        return false;
+        console.error('[EMAIL FAIL]:', error.message);
+        return { success: false, message: error.message };
     }
 };
 

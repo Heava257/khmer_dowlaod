@@ -55,15 +55,15 @@ router.post('/request-otp', async (req, res) => {
         await user.update({ otpCode, otpExpires });
 
         // Try to send email
-        const emailSent = await sendEmail(
+        const emailResult = await sendEmail(
             email,
             'Your Verification Code - Khmer Download',
             `<h3>Verification Code</h3><p>Your code is: <b>${otpCode}</b></p><p>Expires in 10 minutes.</p>`
         );
 
-        if (!emailSent) {
+        if (!emailResult.success) {
             return res.status(500).json({
-                message: 'Failed to send verification email. Please check your Gmail App Password settings in Railway.'
+                message: `Failed to send email: ${emailResult.message}. Please check your Gmail App Password in Railway.`
             });
         }
 
