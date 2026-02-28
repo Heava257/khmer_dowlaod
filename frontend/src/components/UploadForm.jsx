@@ -23,7 +23,7 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
             setPrice(editItem.price || 0);
             setIsPaid(editItem.isPaid || false);
             setExternalUrl(editItem.externalDownloadUrl || editItem.externalVideoUrl || '');
-            setUploadType(editItem.category ? 'program' : 'video');
+            setUploadType(editItem.programId !== undefined || editItem.category ? 'program' : 'video');
         }
     }, [editItem]);
 
@@ -52,7 +52,8 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
             if (icon) formData.append('icon', icon);
         } else {
             formData.append('externalVideoUrl', externalUrl);
-            if (file) formData.append('video', file);
+            // For videos, we rely on externalUrl, so no direct file upload for the video itself
+            // if (file) formData.append('video', file); // This line is effectively removed by the change
             if (icon) formData.append('thumbnail', icon);
             if (programId) formData.append('programId', programId);
         }
@@ -148,9 +149,10 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                         placeholder={uploadType === 'program' ? "https://pub-..." : "https://www.youtube.com/watch?v=..."}
                         value={externalUrl}
                         onChange={(e) => setExternalUrl(e.target.value)}
+                        required={uploadType === 'video'}
                     />
                     <p style={{ fontSize: '0.8rem', color: '#8b949e', marginTop: '0.5rem' }}>
-                        * {uploadType === 'program' ? 'ល្អបំផុតសម្រាប់ឯកសារធំៗ (SketchUp, Photoshop, ...)' : 'ដាក់ Link ពី Youtube ដើម្បីឱ្យ User ទស្សនាផ្ទាល់'}
+                        * {uploadType === 'program' ? 'ល្អបំផុតសម្រាប់ឯកសារធំៗ (SketchUp, Photoshop, ...)' : 'តម្រូវឱ្យដាក់ Link ពី Youtube ដើម្បីឱ្យ User ទស្សនាផ្ទាល់'}
                     </p>
                 </div>
 
@@ -212,12 +214,14 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                 )}
 
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                            {uploadType === 'program' ? 'Program File' : 'Video File'} {(editItem || externalUrl) && '(Optional)'}
-                        </label>
-                        <input type="file" onChange={(e) => setFile(e.target.files[0])} required={!editItem && !externalUrl} />
-                    </div>
+                    {uploadType === 'program' && (
+                        <div style={{ flex: 1 }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                                Program File {(editItem || externalUrl) && '(Optional)'}
+                            </label>
+                            <input type="file" onChange={(e) => setFile(e.target.files[0])} required={!editItem && !externalUrl} />
+                        </div>
+                    )}
                     <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
                             {uploadType === 'program' ? 'Icon Image' : 'Thumbnail'} {editItem && '(Optional)'}
