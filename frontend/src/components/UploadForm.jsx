@@ -214,9 +214,9 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                            {uploadType === 'program' ? 'Program File' : 'Video File'} {editItem && '(Optional)'}
+                            {uploadType === 'program' ? 'Program File' : 'Video File'} {(editItem || externalUrl) && '(Optional)'}
                         </label>
-                        <input type="file" onChange={(e) => setFile(e.target.files[0])} required={!editItem} />
+                        <input type="file" onChange={(e) => setFile(e.target.files[0])} required={!editItem && !externalUrl} />
                     </div>
                     <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
