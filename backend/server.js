@@ -82,6 +82,19 @@ const startServer = async () => {
     try {
         await sequelize.sync({ alter: true });
         console.log('Database synced.');
+
+        // Auto-seed Admin if not exists
+        const adminExists = await User.findOne({ where: { username: 'admin' } });
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            await User.create({
+                username: 'admin',
+                password: hashedPassword,
+                role: 'admin'
+            });
+            console.log('Default admin created (admin / admin123)');
+        }
+
         app.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT}`);
         });
