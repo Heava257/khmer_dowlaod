@@ -1,2 +1,2 @@
-// Use the environment variable if defined, otherwise fall back to localhost
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+// Use the production backend URL on Railway for the deployed app
+export const API_BASE_URL = 'https://khmerdowlaodbackend-production.up.railway.app';
