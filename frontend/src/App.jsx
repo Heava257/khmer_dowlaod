@@ -310,11 +310,11 @@ function App() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', textAlign: 'left' }}>
                 <div>
                   <p style={{ fontWeight: 'bold', color: '#fff', margin: 0 }}>Telegram:</p>
-                  <a href="https://t.me/p_chiva" target="_blank" rel="noreferrer" style={{ color: '#58a6ff', textDecoration: 'none' }}>@p_chiva</a>
+                  <a href="https://t.me/pongchiva" target="_blank" rel="noreferrer" style={{ color: '#58a6ff', textDecoration: 'none' }}>@pongchiva</a>
                 </div>
                 <div>
                   <p style={{ fontWeight: 'bold', color: '#fff', margin: 0 }}>Email Support:</p>
-                  <p style={{ color: '#8b949e', margin: 0 }}>support@khmerdownload.com</p>
+                  <p style={{ color: '#8b949e', margin: 0 }}>khmerdownload007@gmail.com</p>
                 </div>
               </div>
             </div>
