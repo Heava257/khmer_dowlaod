@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 
 function UploadForm({ onUploadSuccess, editItem, onCancel }) {
     const [uploadType, setUploadType] = useState('program'); // 'program' or 'video'
@@ -32,11 +33,11 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
         formData.append('title', title);
         formData.append('description', description);
 
-        let endpoint = `http://localhost:5050/api/${uploadType}s`;
+        let endpoint = `${API_BASE_URL}/api/${uploadType}s`;
         let method = 'POST';
 
         if (editItem) {
-            endpoint = `http://localhost:5050/api/${uploadType}s/${editItem.id}`;
+            endpoint = `${API_BASE_URL}/api/${uploadType}s/${editItem.id}`;
             method = 'PUT';
         }
 

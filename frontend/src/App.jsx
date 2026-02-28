@@ -3,6 +3,7 @@ import './index.css';
 import UploadForm from './components/UploadForm';
 import Login from './components/Login';
 import PaymentPage from './components/PaymentPage';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [programs, setPrograms] = useState([]);
@@ -31,7 +32,7 @@ function App() {
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetch('http://localhost:5050/api/programs');
+      const response = await fetch(`${API_BASE_URL}/api/programs`);
       const data = await response.json();
       setPrograms(data.length > 0 ? data : [
         { id: 1, title: 'Adobe Photoshop', category: 'Programs', description: 'Professional image editing software.', icon: '🎨', isPaid: true, price: 10.99 },
@@ -45,7 +46,7 @@ function App() {
 
   const fetchVideos = async () => {
     try {
-      const response = await fetch('http://localhost:5050/api/videos');
+      const response = await fetch(`${API_BASE_URL}/api/videos`);
       const data = await response.json();
       setVideos(data.length > 0 ? data : [
         { id: 1, title: 'How to install Photoshop', description: 'Detailed guide for Adobe Photoshop installation.' },
@@ -67,7 +68,7 @@ function App() {
     if (!window.confirm('Are you sure you want to delete this?')) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5050/api/${type}s/delete/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/${type}s/delete/${id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -93,7 +94,7 @@ function App() {
 
   const handleDownloadNow = (item) => {
     if (item.downloadUrl) {
-      window.open(`http://localhost:5050${item.downloadUrl}`, '_blank');
+      window.open(`${API_BASE_URL}${item.downloadUrl}`, '_blank');
     } else {
       alert('Internal download link is missing.');
     }
@@ -108,8 +109,9 @@ function App() {
   return (
     <div className="app-container">
       <aside className="sidebar">
-        <div className="logo" onClick={() => { setCurrentView('home'); setActiveCategory('All'); }} style={{ cursor: 'pointer' }}>
-          <span>🇰🇭</span> KHMER DOWNLOAD
+        <div className="logo" onClick={() => { setCurrentView('home'); setActiveCategory('All'); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src="/logo.png" alt="" style={{ height: '35px', width: 'auto' }} />
+          <span>KHMER DOWNLOAD</span>
         </div>
         <ul className="nav-links">
           <li className={`nav-item ${currentView === 'home' && activeCategory === 'All' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('All'); }}>
@@ -227,7 +229,7 @@ function App() {
 
                       <div className="program-icon">
                         {app.iconUrl ? (
-                          <img src={`http://localhost:5050${app.iconUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }} />
+                          <img src={`${API_BASE_URL}${app.iconUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }} />
                         ) : (app.icon || '📦')}
                       </div>
                       <div className="program-name">{app.title}</div>
@@ -247,7 +249,7 @@ function App() {
                           if (app.isPaid) {
                             handleBuyNow(app);
                           } else {
-                            handleDownloadNow(app);
+                            if (app.downloadUrl) window.open(`${API_BASE_URL}${app.downloadUrl}`, '_blank');
                           }
                         }}
                       >
@@ -287,7 +289,7 @@ function App() {
                   <button
                     className="btn-primary"
                     style={{ width: '100%', marginTop: '1rem' }}
-                    onClick={() => v.videoUrl && window.open(`http://localhost:5050${v.videoUrl}`, '_blank')}
+                    onClick={() => v.videoUrl && window.open(`${API_BASE_URL}${v.videoUrl}`, '_blank')}
                   >
                     ▶️ Play Now
                   </button>

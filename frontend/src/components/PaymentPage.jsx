@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BakongKHQR } from 'bakong-khqr';
 import { QRCodeSVG } from 'qrcode.react';
+import { API_BASE_URL } from '../config';
 
 function PaymentPage({ item, onCancel, onPaymentSuccess }) {
     const [qrString, setQrString] = useState('');
@@ -53,7 +54,7 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
 
     const recordTransaction = async (bNum, md5Hash) => {
         try {
-            await fetch('http://localhost:5050/api/transactions/init', {
+            await fetch(`${API_BASE_URL}/api/transactions/init`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
