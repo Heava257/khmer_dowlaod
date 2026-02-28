@@ -23,7 +23,7 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
             setPrice(editItem.price || 0);
             setIsPaid(editItem.isPaid || false);
             setExternalUrl(editItem.externalDownloadUrl || editItem.externalVideoUrl || '');
-            setUploadType(editItem.programId !== undefined || editItem.category ? 'program' : 'video');
+            setUploadType(editItem.category ? 'program' : 'video');
         }
     }, [editItem]);
 
@@ -36,7 +36,8 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
         formData.append('description', description);
 
         // Simple validation for new programs
-        if (uploadType === 'program' && !editItem && !file && !externalUrl) {
+        const sanitizedExternalUrl = externalUrl.trim();
+        if (uploadType === 'program' && !editItem && !file && !sanitizedExternalUrl) {
             alert('សូមមេត្តាជ្រើសរើស File កម្មវិធី ឬដាក់ link ពី Cloudflare R2!');
             setUploading(false);
             return;
@@ -52,15 +53,13 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
 
         if (uploadType === 'program') {
             formData.append('category', category);
-            formData.append('price', price);
-            formData.append('isPaid', isPaid);
-            formData.append('externalDownloadUrl', externalUrl);
+            formData.append('price', String(price || 0));
+            formData.append('isPaid', String(isPaid));
+            formData.append('externalDownloadUrl', sanitizedExternalUrl);
             if (file) formData.append('file', file);
             if (icon) formData.append('icon', icon);
         } else {
-            formData.append('externalVideoUrl', externalUrl);
-            // For videos, we rely on externalUrl, so no direct file upload for the video itself
-            // if (file) formData.append('video', file); // This line is effectively removed by the change
+            formData.append('externalVideoUrl', sanitizedExternalUrl);
             if (icon) formData.append('thumbnail', icon);
             if (programId) formData.append('programId', programId);
         }
@@ -75,6 +74,7 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                 body: formData,
             });
 
+            const data = await response.json();
             if (response.ok) {
                 alert(`${uploadType.charAt(0).toUpperCase() + uploadType.slice(1)} ${editItem ? 'updated' : 'upload'} successful!`);
                 if (!editItem) {
@@ -89,11 +89,11 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                 }
                 if (onUploadSuccess) onUploadSuccess();
             } else {
-                alert('Action failed.');
+                alert(`បរាជ័យ (Failed): ${data.message || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error during process.');
+            alert('កំហុសប្រព័ន្ធ (System Error). Please check connection.');
         } finally {
             setUploading(false);
         }

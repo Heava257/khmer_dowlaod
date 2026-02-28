@@ -7,21 +7,22 @@ const fs = require('fs');
 const auth = require('../middleware/auth');
 const { cloudinary } = require('../middleware/cloudinary');
 
-// Ensure uploads directory exists
-const uploadDir = 'uploads';
+// Use absolute path for uploads to ensure consistency across environments
+const uploadDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Disk storage for videos
+// Disk storage for temporary processing before Cloudinary upload
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
     }
 });
+
 const diskUpload = multer({
     storage,
     limits: { fileSize: 500 * 1024 * 1024 } // 500MB limit
@@ -42,27 +43,50 @@ router.post('/', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnail'
     try {
         const { title, description, programId, externalVideoUrl } = req.body;
 
-        let thumbnailUrl = '';
-        const videoUrl = req.files['video'] ? `/uploads/${req.files['video'][0].filename}` : '';
+        let thumbnailsUrl = '';
+        let videoUrl = '';
+
+        if (req.files && req.files['video']) {
+            videoUrl = `/uploads/${req.files['video'][0].filename}`;
+        }
 
         // Manually upload thumbnail to Cloudinary if it exists
-        if (req.files['thumbnail']) {
+        if (req.files && req.files['thumbnail']) {
             const thumbnailFile = req.files['thumbnail'][0];
-            const result = await cloudinary.uploader.upload(thumbnailFile.path, {
-                folder: 'khmer_download/thumbnails'
-            });
-            thumbnailUrl = result.secure_url;
-            // Optionally delete the local file
-            fs.unlinkSync(thumbnailFile.path);
+            const thumbPath = path.resolve(thumbnailFile.path);
+
+            try {
+                const result = await cloudinary.uploader.upload(thumbPath, {
+                    folder: 'khmer_download/thumbnails',
+                    resource_type: 'image'
+                });
+                thumbnailsUrl = result.secure_url;
+
+                // Clean up local thumbnail file after successful Cloudinary upload
+                if (fs.existsSync(thumbPath)) {
+                    fs.unlinkSync(thumbPath);
+                }
+            } catch (cloudErr) {
+                console.error('Cloudinary Upload Error:', cloudErr);
+                throw new Error('រូបភាព Thumbnail មិនអាចបង្ហោះបានទេ: ' + cloudErr.message);
+            }
         }
 
         const video = await Video.create({
-            title, description, videoUrl, thumbnailUrl, programId, externalVideoUrl
+            title,
+            description,
+            videoUrl,
+            thumbnailUrl: thumbnailsUrl,
+            programId: programId || null,
+            externalVideoUrl: externalVideoUrl || ''
         });
         res.status(201).json(video);
     } catch (error) {
         console.error('Video Creation Error:', error);
-        res.status(400).json({ message: error.message });
+        res.status(400).json({
+            message: 'ការបង្ហោះវីដេអូបរាជ័យ: ' + error.message,
+            detail: error.stack
+        });
     }
 });
 
@@ -73,23 +97,44 @@ router.put('/:id', auth, diskUpload.fields([{ name: 'video' }, { name: 'thumbnai
         if (!video) return res.status(404).json({ message: 'Video not found' });
 
         const { title, description, programId, externalVideoUrl } = req.body;
-        const updates = { title, description, programId, externalVideoUrl };
+        const updates = {
+            title,
+            description,
+            programId: programId || null,
+            externalVideoUrl: externalVideoUrl || ''
+        };
 
-        if (req.files['video']) updates.videoUrl = `/uploads/${req.files['video'][0].filename}`;
+        if (req.files && req.files['video']) {
+            updates.videoUrl = `/uploads/${req.files['video'][0].filename}`;
+        }
 
-        if (req.files['thumbnail']) {
-            const result = await cloudinary.uploader.upload(req.files['thumbnail'][0].path, {
-                folder: 'khmer_download/thumbnails'
-            });
-            updates.thumbnailUrl = result.secure_url;
-            fs.unlinkSync(req.files['thumbnail'][0].path);
+        if (req.files && req.files['thumbnail']) {
+            const thumbnailFile = req.files['thumbnail'][0];
+            const thumbPath = path.resolve(thumbnailFile.path);
+
+            try {
+                const result = await cloudinary.uploader.upload(thumbPath, {
+                    folder: 'khmer_download/thumbnails',
+                    resource_type: 'image'
+                });
+                updates.thumbnailUrl = result.secure_url;
+                if (fs.existsSync(thumbPath)) {
+                    fs.unlinkSync(thumbPath);
+                }
+            } catch (cloudErr) {
+                console.error('Cloudinary Update Error:', cloudErr);
+                throw new Error('រូបភាព Thumbnail មិនអាច Update បានទេ: ' + cloudErr.message);
+            }
         }
 
         await video.update(updates);
         res.json(video);
     } catch (error) {
         console.error('Video Update Error:', error);
-        res.status(400).json({ message: error.message });
+        res.status(400).json({
+            message: 'ការកែសម្រួលវីដេអូបរាជ័យ: ' + error.message,
+            detail: error.stack
+        });
     }
 });
 
