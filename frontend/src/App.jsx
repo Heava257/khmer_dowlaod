@@ -5,6 +5,7 @@ import UploadForm from './components/UploadForm';
 import FeedbackForm from './components/FeedbackForm';
 import AuthModal from './components/AuthModal';
 import ProductDetail from './components/ProductDetail';
+import Login from './components/Login';
 import { API_BASE_URL } from './config';
 
 function App() {
@@ -323,6 +324,8 @@ function App() {
             </div>
           )}
 
+          {currentView === 'login' && <Login onLoginSuccess={(u) => { setUser(u); setCurrentView('home'); }} />}
+
           {currentView === 'upload' && isAdmin && (
             <UploadForm
               editItem={editingItem}
@@ -349,6 +352,7 @@ function App() {
         <AuthModal
           onClose={() => setShowAuthModal(false)}
           onLoginSuccess={(u) => { setUser(u); }}
+          onSwitchToAdmin={() => { setShowAuthModal(false); setCurrentView('login'); }}
         />
       )}
     </div>

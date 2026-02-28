@@ -5,12 +5,10 @@ import { API_BASE_URL } from '../config';
 
 function PaymentPage({ item, onCancel, onPaymentSuccess }) {
     const [qrString, setQrString] = useState('');
-    const [md5, setMd5] = useState('');
     const [billNumber, setBillNumber] = useState('');
-    const [countdown, setCountdown] = useState(120);
+    const [countdown, setCountdown] = useState(300); // 5 minutes
     const [isVerifying, setIsVerifying] = useState(false);
 
-    // Official data you will use for bank application
     const merchantInfo = {
         bakongAccountId: 'pong_chiva@bkrt',
         merchantName: 'PONG CHIVA',
@@ -19,7 +17,6 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
     };
 
     useEffect(() => {
-        // 1. Generate KHQR Data
         const khqr = new BakongKHQR();
         const bNumber = `KH-${Date.now()}`;
         setBillNumber(bNumber);
@@ -28,7 +25,7 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
             bakongAccountId: merchantInfo.bakongAccountId,
             merchantName: merchantInfo.merchantName,
             merchantCity: merchantInfo.merchantCity,
-            amount: parseFloat(item.price || 2.00),
+            amount: parseFloat(item.price || 0.00),
             currency: 'USD',
             storeLabel: 'Khmer Download',
             terminalLabel: 'Web Store',
@@ -38,13 +35,9 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
         const result = khqr.generateIndividual(individualInfo);
         if (result.status.code === 0) {
             setQrString(result.data.qr);
-            setMd5(result.data.md5);
-
-            // 2. Record this payment attempt in our Database
             recordTransaction(bNumber, result.data.md5);
         }
 
-        // 3. Status Polling Timer
         const timer = setInterval(() => {
             setCountdown(prev => (prev > 0 ? prev - 1 : 0));
         }, 1000);
@@ -54,14 +47,20 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
 
     const recordTransaction = async (bNum, md5Hash) => {
         try {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
             await fetch(`${API_BASE_URL}/api/transactions/init`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     billNumber: bNum,
                     amount: item.price,
                     programId: item.id,
-                    md5: md5Hash
+                    md5: md5Hash,
+                    userId: user?.id
                 })
             });
         } catch (error) {
@@ -71,8 +70,7 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
 
     const handleVerify = () => {
         setIsVerifying(true);
-        // In real app, we check the bank API here.
-        // For bank review, we show a professional verification process.
+        // Simulate Bank Verification
         setTimeout(() => {
             setIsVerifying(false);
             onPaymentSuccess();
@@ -81,78 +79,40 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
 
     return (
         <div className="animate-fade-in" style={{
-            maxWidth: '600px',
+            maxWidth: '520px',
             margin: '2rem auto',
-            background: 'rgba(22, 27, 34, 0.7)',
-            backdropFilter: 'blur(15px)',
+            background: '#ffffff',
             padding: '3rem',
             borderRadius: '32px',
             textAlign: 'center',
-            boxShadow: '0 40px 100px rgba(0,0,0,0.6)',
-            border: '1px solid var(--border-color)',
-            position: 'relative',
-            overflow: 'hidden'
+            boxShadow: '0 20px 60px rgba(0,0,0,0.05)',
+            border: '1px solid #eee',
         }}>
-            {/* Background Glow */}
-            <div style={{
-                position: 'absolute',
-                top: '-50px',
-                right: '-50px',
-                width: '150px',
-                height: '150px',
-                background: 'var(--accent-color)',
-                filter: 'blur(100px)',
-                opacity: '0.2',
-                zIndex: -1
-            }}></div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '2.5rem' }}>
-                <img src="https://bakong.nbc.org.kh/assets/img/bakong-logo.png" alt="Bakong" style={{ height: '35px' }} />
-                <h2 style={{
-                    color: '#fff',
-                    margin: 0,
-                    fontSize: '1.8rem',
-                    fontWeight: '800',
-                    letterSpacing: '-0.5px'
-                }}>Secure Checkout</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '2rem' }}>
+                <img src="https://bakong.nbc.org.kh/assets/img/bakong-logo.png" alt="Bakong" style={{ height: '30px' }} />
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '800', letterSpacing: '-0.5px' }}>Secure Payment</h2>
             </div>
 
-            <div style={{
-                marginBottom: '2.5rem',
-                padding: '1.5rem',
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255,255,255,0.05)'
-            }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    Payment For: <span style={{ color: '#fff', fontWeight: 'bold' }}>{item.title}</span>
-                </p>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '8px' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>USD</span>
-                    <strong style={{
-                        color: '#f1c40f',
-                        fontSize: '3rem',
-                        fontWeight: '900',
-                        textShadow: '0 0 20px rgba(241, 196, 15, 0.3)'
-                    }}>${item.price}</strong>
-                </div>
+            <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f5f5f7', borderRadius: '20px' }}>
+                <div style={{ fontSize: '0.8rem', color: '#86868b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Amount to Pay</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1d1d1f' }}>${item.price}</div>
+                <div style={{ fontSize: '0.9rem', color: '#1d1d1f', marginTop: '0.5rem', fontWeight: '600' }}>{item.title}</div>
             </div>
 
             <div style={{
                 background: '#fff',
-                padding: '1.8rem',
+                padding: '1.5rem',
                 borderRadius: '24px',
+                border: '1px solid #eee',
                 display: 'inline-block',
-                position: 'relative',
                 marginBottom: '1.5rem',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-                transform: 'translateZ(0)'
+                position: 'relative'
             }}>
                 {qrString ? (
-                    <QRCodeSVG value={qrString} size={260} level="H" includeMargin={true} />
+                    <QRCodeSVG value={qrString} size={240} level="H" includeMargin={true} />
                 ) : (
-                    <div style={{ width: '260px', height: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-                        <div className="loader" style={{ borderTopColor: '#000' }}></div>
+                    <div style={{ width: '240px', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="loader"></div>
                     </div>
                 )}
                 {isVerifying && (
@@ -165,90 +125,34 @@ function PaymentPage({ item, onCancel, onPaymentSuccess }) {
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        zIndex: 20,
-                        backdropFilter: 'blur(2px)'
+                        zIndex: 20
                     }}>
-                        <div className="loader" style={{ borderTop: '4px solid #f1c40f', width: '50px', height: '50px' }}></div>
-                        <p style={{ marginTop: '1.5rem', color: '#000', fontWeight: '800', fontSize: '1.1rem' }}>VERIFYING BLOCKCHAIN...</p>
-                        <p style={{ color: '#666', fontSize: '0.8rem' }}>Please wait a few seconds</p>
+                        <div className="loader"></div>
+                        <p style={{ marginTop: '1rem', fontWeight: '800', color: '#007aff' }}>CHECKING BANK...</p>
                     </div>
                 )}
             </div>
 
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                color: 'var(--text-secondary)',
-                fontSize: '0.85rem',
-                padding: '0 1rem',
-                marginBottom: '2rem',
-                fontWeight: '600'
-            }}>
-                <span>ID: {billNumber}</span>
-                <span style={{
-                    color: countdown < 30 ? '#ff7b72' : 'var(--text-secondary)',
-                    background: countdown < 30 ? 'rgba(255,123,114,0.1)' : 'transparent',
-                    padding: '2px 8px',
-                    borderRadius: '6px'
-                }}>
-                    TIMEOUT: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
-                </span>
+            <div style={{ fontSize: '0.8rem', color: '#86868b', marginBottom: '2rem' }}>
+                Ref ID: {billNumber} • Time Left: {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
             </div>
 
-            <div style={{
-                background: 'rgba(13, 17, 23, 0.5)',
-                padding: '1.5rem',
-                borderRadius: '20px',
-                textAlign: 'left',
-                marginBottom: '2.5rem',
-                border: '1px solid var(--border-color)'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <div className="pulse-dot" style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#238636' }}></div>
-                    <span style={{ fontWeight: '800', fontSize: '0.95rem', color: '#fff', letterSpacing: '0.5px' }}>HOW TO PAY</span>
-                </div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }}>
-                    <div style={{ marginBottom: '5px' }}>• Open <strong>ABA Mobile</strong> or any <strong>Bakong App</strong></div>
-                    <div style={{ marginBottom: '5px' }}>• Scan the KHQR to transfer <strong>${item.price}</strong></div>
-                    <div>• Press <strong>Verify Payment</strong> to unlock the download</div>
-                </div>
+            <div style={{ textAlign: 'left', background: '#f5f5f7', padding: '1.5rem', borderRadius: '18px', marginBottom: '2rem' }}>
+                <div style={{ fontWeight: '800', fontSize: '0.9rem', marginBottom: '0.8rem' }}>Payment Instructions:</div>
+                <ol style={{ paddingLeft: '1.2rem', fontSize: '0.85rem', color: '#424245', lineHeight: '1.6' }}>
+                    <li>Open your ABA or Bakong mobile app</li>
+                    <li>Scan the KHQR code above</li>
+                    <li>Confirm the payment of <b>${item.price}</b></li>
+                    <li>Wait 5-10 seconds and click <b>Verify Now</b></li>
+                </ol>
             </div>
 
-            <div style={{ display: 'flex', gap: '1.2rem' }}>
-                <button
-                    className="btn-secondary"
-                    onClick={onCancel}
-                    style={{
-                        flex: 1,
-                        padding: '1rem',
-                        borderRadius: '16px',
-                        border: '1px solid var(--border-color)',
-                        background: 'transparent',
-                        color: 'var(--text-secondary)',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s'
-                    }}
-                >
-                    Cancel Order
+            <div style={{ display: 'flex', gap: '1rem' }}>
+                <button onClick={onCancel} className="buy-btn" style={{ flex: 1, margin: 0, background: '#f2f2f7', color: '#1d1d1f' }}>
+                    Cancel
                 </button>
-                <button
-                    className="btn-primary"
-                    onClick={handleVerify}
-                    disabled={isVerifying}
-                    style={{
-                        flex: 2,
-                        background: 'linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)',
-                        color: '#000',
-                        fontWeight: '900',
-                        fontSize: '1.1rem',
-                        borderRadius: '16px',
-                        boxShadow: '0 10px 25px rgba(241, 196, 15, 0.3)',
-                        border: 'none',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {isVerifying ? 'CHECKING...' : 'VERIFY PAYMENT ✅'}
+                <button onClick={handleVerify} className="buy-btn" style={{ flex: 2, margin: 0 }}>
+                    {isVerifying ? 'Verifying...' : 'Verify Now ✅'}
                 </button>
             </div>
         </div>

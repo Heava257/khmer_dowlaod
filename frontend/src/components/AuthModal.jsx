@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { API_BASE_URL } from '../config';
 
-function AuthModal({ onClose, onLoginSuccess }) {
+function AuthModal({ onClose, onLoginSuccess, onSwitchToAdmin }) {
     const [step, setStep] = useState(1); // 1: Email, 2: OTP
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
@@ -120,7 +120,8 @@ function AuthModal({ onClose, onLoginSuccess }) {
                 )}
 
                 <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #eee', fontSize: '0.8rem', color: '#999' }}>
-                    By continuing, you agree to our Terms of Service and Privacy Policy.
+                    <p style={{ marginBottom: '0.5rem' }}>By continuing, you agree to our Terms and Privacy.</p>
+                    <span onClick={onSwitchToAdmin} style={{ color: '#007aff', cursor: 'pointer', fontWeight: 'bold' }}>Admin Login (Password)</span>
                 </div>
             </div>
         </div>

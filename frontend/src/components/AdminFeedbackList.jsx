@@ -16,7 +16,7 @@ function AdminFeedbackList() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            setFeedbacks(data);
+            setFeedbacks(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Fetch Feedback Error:', error);
         } finally {
@@ -42,7 +42,7 @@ function AdminFeedbackList() {
     };
 
     const deleteFeedback = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this feedback?')) return;
+        if (!window.confirm('Are you sure?')) return;
         try {
             const token = localStorage.getItem('token');
             await fetch(`${API_BASE_URL}/api/feedbacks/${id}`, {
@@ -56,45 +56,43 @@ function AdminFeedbackList() {
     };
 
     return (
-        <div style={{ marginTop: '4rem', padding: '2rem', background: 'var(--sidebar-bg)', borderRadius: '24px', border: '1px solid var(--glass-border)' }}>
-            <h3 style={{ marginBottom: '2rem', color: 'var(--accent-color)' }}>📋 Admin Feedback Management</h3>
+        <div style={{ padding: '2rem', background: '#fff', borderRadius: '24px', border: '1px solid #eee' }}>
+            <h2 style={{ marginBottom: '2rem', fontSize: '1.5rem', fontWeight: 800 }}>📋 User Feedback Management</h2>
 
             {loading ? (
-                <p>Loading feedbacks...</p>
+                <div style={{ textAlign: 'center', padding: '3rem' }}><div className="loader"></div></div>
             ) : feedbacks.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)' }}>No feedbacks yet.</p>
+                <div style={{ textAlign: 'center', padding: '5rem', color: '#86868b' }}>No feedbacks available yet.</div>
             ) : (
-                <div style={{ display: 'grid', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gap: '1.2rem' }}>
                     {feedbacks.map(f => (
-                        <div key={f.id} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--glass-border)', position: 'relative' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <div key={f.id} style={{ padding: '2rem', background: '#f9f9fb', borderRadius: '20px', border: '1px solid #eee' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                                 <div>
-                                    <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.2rem' }}>{f.name}</h4>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--accent-color)' }}>{f.contact}</p>
+                                    <h4 style={{ fontWeight: 800, fontSize: '1.1rem' }}>{f.name}</h4>
+                                    <p style={{ fontSize: '0.85rem', color: '#007aff', fontWeight: 600 }}>{f.contact}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <span style={{
                                         fontSize: '0.7rem',
-                                        padding: '4px 10px',
-                                        borderRadius: '8px',
-                                        background: f.status === 'pending' ? 'rgba(241,196,15,0.1)' : 'rgba(46,204,113,0.1)',
-                                        color: f.status === 'pending' ? '#f1c40f' : '#2ecc71',
-                                        border: f.status === 'pending' ? '1px solid #f1c40f' : '1px solid #2ecc71'
+                                        padding: '4px 12px',
+                                        borderRadius: '100px',
+                                        background: f.status === 'pending' ? '#fffbeb' : '#f0fdf4',
+                                        color: f.status === 'pending' ? '#b45309' : '#15803d',
+                                        fontWeight: 'bold',
+                                        border: '1px solid currentColor'
                                     }}>
                                         {f.status.toUpperCase()}
                                     </span>
-                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                                        {new Date(f.createdAt).toLocaleDateString()}
-                                    </p>
                                 </div>
                             </div>
-                            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '1.5rem', whiteSpace: 'pre-wrap' }}>{f.message}</p>
+                            <p style={{ color: '#424245', lineHeight: '1.6', marginBottom: '2rem', whiteSpace: 'pre-wrap' }}>{f.message}</p>
 
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 {f.status === 'pending' && (
-                                    <button onClick={() => updateStatus(f.id, 'resolved')} className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', background: '#2ecc71' }}>Mark Resolved</button>
+                                    <button onClick={() => updateStatus(f.id, 'resolved')} className="buy-btn" style={{ flex: 1, margin: 0, padding: '0.6rem', fontSize: '0.85rem' }}>Resolved</button>
                                 )}
-                                <button onClick={() => deleteFeedback(f.id)} className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', background: 'rgba(255,123,114,0.1)', color: '#ff7b72', border: '1px solid #ff7b72', boxShadow: 'none' }}>Delete</button>
+                                <button onClick={() => deleteFeedback(f.id)} className="buy-btn" style={{ flex: 1, margin: 0, padding: '0.6rem', fontSize: '0.85rem', background: '#fef2f2', color: '#ef4444' }}>Delete</button>
                             </div>
                         </div>
                     ))}
