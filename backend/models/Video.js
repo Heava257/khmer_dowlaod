@@ -12,6 +12,9 @@ const Video = sequelize.define('Video', {
     videoUrl: {
         type: DataTypes.STRING,
     },
+    externalVideoUrl: {
+        type: DataTypes.STRING,
+    },
     thumbnailUrl: {
         type: DataTypes.STRING,
     },

@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
 // Create new program (with upload) - Protected
 router.post('/', auth, upload.fields([{ name: 'file' }, { name: 'icon' }]), async (req, res) => {
     try {
-        const { title, description, category, version, price, isPaid } = req.body;
+        const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
         const downloadUrl = req.files['file'] ? `/uploads/${req.files['file'][0].filename}` : '';
         const iconUrl = req.files['icon'] ? `/uploads/${req.files['icon'][0].filename}` : '';
 
@@ -44,7 +44,8 @@ router.post('/', auth, upload.fields([{ name: 'file' }, { name: 'icon' }]), asyn
             downloadUrl,
             iconUrl,
             price: price || 0,
-            isPaid: isPaid === 'true' || isPaid === true
+            isPaid: isPaid === 'true' || isPaid === true,
+            externalDownloadUrl
         });
         res.status(201).json(program);
     } catch (error) {
@@ -58,14 +59,15 @@ router.put('/:id', auth, upload.fields([{ name: 'file' }, { name: 'icon' }]), as
         const program = await Program.findByPk(req.params.id);
         if (!program) return res.status(404).json({ message: 'Program not found' });
 
-        const { title, description, category, version, price, isPaid } = req.body;
+        const { title, description, category, version, price, isPaid, externalDownloadUrl } = req.body;
         const updates = {
             title,
             description,
             category,
             version,
             price: price || 0,
-            isPaid: isPaid === 'true' || isPaid === true
+            isPaid: isPaid === 'true' || isPaid === true,
+            externalDownloadUrl
         };
 
         if (req.files['file']) updates.downloadUrl = `/uploads/${req.files['file'][0].filename}`;

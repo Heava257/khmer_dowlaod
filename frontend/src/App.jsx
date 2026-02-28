@@ -94,10 +94,12 @@ function App() {
   };
 
   const handleDownloadNow = (item) => {
-    if (item.downloadUrl) {
+    if (item.externalDownloadUrl) {
+      window.open(item.externalDownloadUrl, '_blank');
+    } else if (item.downloadUrl) {
       window.open(`${API_BASE_URL}${item.downloadUrl}`, '_blank');
     } else {
-      alert('Internal download link is missing.');
+      alert('Download link is missing.');
     }
   };
 
@@ -257,7 +259,7 @@ function App() {
                           if (app.isPaid) {
                             handleBuyNow(app);
                           } else {
-                            if (app.downloadUrl) window.open(`${API_BASE_URL}${app.downloadUrl}`, '_blank');
+                            handleDownloadNow(app);
                           }
                         }}
                       >
@@ -297,7 +299,13 @@ function App() {
                   <button
                     className="btn-primary"
                     style={{ width: '100%', marginTop: '1rem' }}
-                    onClick={() => v.videoUrl && window.open(`${API_BASE_URL}${v.videoUrl}`, '_blank')}
+                    onClick={() => {
+                      if (v.externalVideoUrl) {
+                        window.open(v.externalVideoUrl, '_blank');
+                      } else if (v.videoUrl) {
+                        window.open(`${API_BASE_URL}${v.videoUrl}`, '_blank');
+                      }
+                    }}
                   >
                     ▶️ Play Now
                   </button>

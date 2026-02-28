@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
 // Create new video - Protected
 router.post('/', auth, upload.fields([{ name: 'video' }, { name: 'thumbnail' }]), async (req, res) => {
     try {
-        const { title, description, programId } = req.body;
+        const { title, description, programId, externalVideoUrl } = req.body;
         const videoUrl = req.files['video'] ? `/uploads/${req.files['video'][0].filename}` : '';
         const thumbnailUrl = req.files['thumbnail'] ? `/uploads/${req.files['thumbnail'][0].filename}` : '';
 
@@ -40,7 +40,8 @@ router.post('/', auth, upload.fields([{ name: 'video' }, { name: 'thumbnail' }])
             description,
             videoUrl,
             thumbnailUrl,
-            programId
+            programId,
+            externalVideoUrl
         });
         res.status(201).json(video);
     } catch (error) {
@@ -54,8 +55,8 @@ router.put('/:id', auth, upload.fields([{ name: 'video' }, { name: 'thumbnail' }
         const video = await Video.findByPk(req.params.id);
         if (!video) return res.status(404).json({ message: 'Video not found' });
 
-        const { title, description, programId } = req.body;
-        const updates = { title, description, programId };
+        const { title, description, programId, externalVideoUrl } = req.body;
+        const updates = { title, description, programId, externalVideoUrl };
 
         if (req.files['video']) updates.videoUrl = `/uploads/${req.files['video'][0].filename}`;
         if (req.files['thumbnail']) updates.thumbnailUrl = `/uploads/${req.files['thumbnail'][0].filename}`;

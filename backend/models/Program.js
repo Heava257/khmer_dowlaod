@@ -19,6 +19,9 @@ const Program = sequelize.define('Program', {
     downloadUrl: {
         type: DataTypes.STRING,
     },
+    externalDownloadUrl: {
+        type: DataTypes.STRING,
+    },
     iconUrl: {
         type: DataTypes.STRING,
     },

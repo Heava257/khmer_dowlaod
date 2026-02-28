@@ -12,6 +12,7 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
     const [price, setPrice] = useState(0);
     const [isPaid, setIsPaid] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [externalUrl, setExternalUrl] = useState('');
 
     useEffect(() => {
         if (editItem) {
@@ -21,6 +22,7 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
             setProgramId(editItem.programId || '');
             setPrice(editItem.price || 0);
             setIsPaid(editItem.isPaid || false);
+            setExternalUrl(editItem.externalDownloadUrl || editItem.externalVideoUrl || '');
             setUploadType(editItem.category ? 'program' : 'video');
         }
     }, [editItem]);
@@ -45,9 +47,11 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
             formData.append('category', category);
             formData.append('price', price);
             formData.append('isPaid', isPaid);
+            formData.append('externalDownloadUrl', externalUrl);
             if (file) formData.append('file', file);
             if (icon) formData.append('icon', icon);
         } else {
+            formData.append('externalVideoUrl', externalUrl);
             if (file) formData.append('video', file);
             if (icon) formData.append('thumbnail', icon);
             if (programId) formData.append('programId', programId);
@@ -73,6 +77,7 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                     setProgramId('');
                     setPrice(0);
                     setIsPaid(false);
+                    setExternalUrl('');
                 }
                 if (onUploadSuccess) onUploadSuccess();
             } else {
@@ -130,6 +135,23 @@ function UploadForm({ onUploadSuccess, editItem, onCancel }) {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                     ></textarea>
+                </div>
+
+                <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                        🚀 External Storage Link (Cloudflare R2, Google Drive, etc.) - Optional
+                    </label>
+                    <input
+                        type="text"
+                        className="search-bar"
+                        style={{ width: '100%', borderRadius: '10px' }}
+                        placeholder="https://..."
+                        value={externalUrl}
+                        onChange={(e) => setExternalUrl(e.target.value)}
+                    />
+                    <p style={{ fontSize: '0.8rem', color: '#8b949e', marginTop: '0.5rem' }}>
+                        * ល្អបំផុតសម្រាប់ឯកសារធំៗ (SketchUp, Photoshop, ...)
+                    </p>
                 </div>
 
                 {uploadType === 'program' && (
