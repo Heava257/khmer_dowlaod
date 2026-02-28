@@ -119,67 +119,68 @@ function App() {
       </button>
 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-        <div className="logo" onClick={() => { setCurrentView('home'); setActiveCategory('All'); }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src="/logo.png" alt="" style={{ height: '35px', width: 'auto' }} />
-          <span>KHMER DOWNLOAD</span>
+        <div className="logo" onClick={() => { setCurrentView('home'); setActiveCategory('All'); }} style={{ cursor: 'pointer' }}>
+          💎 KHMER DOWNLOAD
         </div>
         <ul className="nav-links">
           <li className={`nav-item ${currentView === 'home' && activeCategory === 'All' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
-            <span>🏠</span> Home
+            🏠 Home
           </li>
 
           {user && (
             <li className={`nav-item ${currentView === 'upload' ? 'active' : ''}`} onClick={() => { setCurrentView('upload'); setEditingItem(null); setIsSidebarOpen(false); }}>
-              <span>📤</span> Upload (Admin)
+              📤 Upload (Admin)
             </li>
           )}
 
           <li className={`nav-item ${activeCategory === 'Programs' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('Programs'); setIsSidebarOpen(false); }}>
-            <span>📦</span> Programs
+            📦 Programs
           </li>
           <li className={`nav-item ${activeCategory === 'Games' ? 'active' : ''}`} onClick={() => { setCurrentView('home'); setActiveCategory('Games'); setIsSidebarOpen(false); }}>
-            <span>🎮</span> Games
+            🎮 Games
           </li>
           <li className={`nav-item ${currentView === 'tutorials' ? 'active' : ''}`} onClick={() => { setCurrentView('tutorials'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
-            <span>🎥</span> Tutorials
+            🎥 Tutorials
           </li>
           <li className={`nav-item ${currentView === 'contact' ? 'active' : ''}`} onClick={() => { setCurrentView('contact'); setActiveCategory('All'); setIsSidebarOpen(false); }}>
-            <span>📞</span> Contact Us
+            📞 Contact Us
           </li>
         </ul>
 
         {user && (
-          <div style={{ marginTop: 'auto', padding: '1rem', borderTop: '1px solid var(--border-color)' }}>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Logged in as:</p>
-            <p style={{ fontWeight: 'bold', marginBottom: '1rem' }}>{user.username}</p>
+          <div style={{ marginTop: 'auto', padding: '1.2rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem' }}>Administrator</p>
+            <p style={{ fontWeight: 'bold', marginBottom: '1.2rem', color: 'var(--accent-color)' }}>{user.username}</p>
             <button
               onClick={handleLogout}
-              style={{ background: 'transparent', border: '1px solid #ff7b72', color: '#ff7b72', width: '100%', padding: '0.5rem', borderRadius: '5px', cursor: 'pointer' }}
+              className="btn-primary"
+              style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', background: 'rgba(255,123,114,0.1)', color: '#ff7b72', border: '1px solid rgba(255,123,114,0.2)', boxShadow: 'none' }}
             >
-              Logout
+              Sign Out
             </button>
           </div>
         )}
       </aside>
-
       <main className="main-content">
         <header className="top-bar">
-          <input
-            type="text"
-            className="search-bar"
-            placeholder="Search for programs, games..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="search-container">
+            <input
+              type="text"
+              className="search-bar"
+              placeholder="Search for software, tutorials..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <div className="user-profile">
             {!user ? (
-              <button className="btn-primary" style={{ padding: '0.5rem 1.5rem' }} onClick={() => setCurrentView('login')}>Login</button>
+              <button className="btn-primary" onClick={() => setCurrentView('login')}>Sign In</button>
             ) : (
-              <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>ADMIN PANEL</span>
+              <span style={{ color: 'var(--accent-color)', fontWeight: '800', letterSpacing: '1px', background: 'rgba(0,163,255,0.1)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid rgba(0,163,255,0.2)' }}>ADMIN SECURE</span>
             )}
           </div>
         </header>
-
+        破
         {currentView === 'login' && <Login onLoginSuccess={(u) => { setUser(u); setCurrentView('home'); }} />}
 
         {currentView === 'payment' && selectedItemForPayment && (
@@ -217,45 +218,31 @@ function App() {
               ) : (
                 <div className="programs-grid">
                   {filteredPrograms.map(app => (
-                    <div key={app.id} className="program-card" style={{ position: 'relative', overflow: 'hidden' }}>
-                      <div style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        padding: '4px 12px',
-                        borderRadius: '8px',
-                        fontSize: '0.72rem',
-                        fontWeight: '900',
-                        zIndex: 10,
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-                        background: app.isPaid
-                          ? 'linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)'
-                          : 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)',
-                        color: app.isPaid ? '#000' : '#fff',
-                        letterSpacing: '0.5px'
-                      }}>
+                    <div key={app.id} className="program-card animate-fade-in" onClick={() => !user && (app.isPaid ? handleBuyNow(app) : handleDownloadNow(app))}>
+                      <div className="price-tag">
                         {app.isPaid ? `$${app.price}` : 'FREE'}
                       </div>
 
                       <div className="program-icon">
                         {app.iconUrl ? (
-                          <img src={`${API_BASE_URL}${app.iconUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }} />
+                          <img src={`${API_BASE_URL}${app.iconUrl}`} alt="" style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }} />
                         ) : (app.icon || '📦')}
                       </div>
                       <div className="program-name">{app.title}</div>
                       <div className="program-meta">{app.category}</div>
 
                       {user && (
-                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '1rem' }}>
-                          <button onClick={() => startEdit(app)} style={{ flex: 1, padding: '0.4rem', borderRadius: '5px', border: '1px solid #58a6ff', background: 'transparent', color: '#58a6ff', cursor: 'pointer', fontSize: '0.7rem' }}>Edit</button>
-                          <button onClick={() => deleteItem('program', app.id)} style={{ flex: 1, padding: '0.4rem', borderRadius: '5px', border: '1px solid #ff7b72', background: 'transparent', color: '#ff7b72', cursor: 'pointer', fontSize: '0.7rem' }}>Delete</button>
+                        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1.2rem', width: '100%' }}>
+                          <button onClick={(e) => { e.stopPropagation(); startEdit(app); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '10px', border: '1px solid var(--accent-color)', background: 'transparent', color: 'var(--accent-color)', cursor: 'pointer', fontWeight: '600' }}>Edit</button>
+                          <button onClick={(e) => { e.stopPropagation(); deleteItem('program', app.id); }} style={{ flex: 1, padding: '0.5rem', borderRadius: '10px', border: '1px solid #ff7b72', background: 'transparent', color: '#ff7b72', cursor: 'pointer', fontWeight: '600' }}>Delete</button>
                         </div>
                       )}
 
                       <button
                         className="btn-primary"
-                        style={{ width: '100%', marginTop: '1rem', background: app.isPaid ? '#f39c12' : '#238636', fontSize: '0.8rem', color: app.isPaid ? '#000' : '#fff', fontWeight: 'bold' }}
-                        onClick={() => {
+                        style={{ width: '100%', marginTop: '1.2rem', filter: app.isPaid ? 'none' : 'hue-rotate(140deg)' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
                           if (app.isPaid) {
                             handleBuyNow(app);
                           } else {
@@ -263,7 +250,7 @@ function App() {
                           }
                         }}
                       >
-                        {app.isPaid ? '💰 Buy Now' : '📥 Download Free'}
+                        {app.isPaid ? '💎 Premium Get' : '🚀 Download'}
                       </button>
                     </div>
                   ))}
@@ -346,7 +333,7 @@ function App() {
           </div>
         </footer>
       </main>
-    </div>
+    </div >
   );
 }
 
