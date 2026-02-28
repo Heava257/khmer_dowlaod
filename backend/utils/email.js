@@ -7,18 +7,26 @@ const sendEmail = async (to, subject, html) => {
         const emailPass = process.env.EMAIL_PASS?.replace(/\s/g, '');
 
         if (!emailUser || !emailPass) {
-            console.log('[EMAIL] ERROR: Missing EMAIL_USER or EMAIL_PASS');
+            console.log('[EMAIL] ERROR: EMAIL_USER or EMAIL_PASS is missing in Railway Variables.');
             return { success: false, message: 'Missing credentials' };
         }
 
-        console.log(`[EMAIL] Transport for ${to} using ${emailUser.substring(0, 2)}...`);
+        console.log(`[EMAIL] Starting transport to ${to} (User: ${emailUser})...`);
 
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true, // Use SSL for port 465
             auth: {
                 user: emailUser,
                 pass: emailPass
-            }
+            },
+            // CRITICAL: Deep logging to see WHY it timeouts in Railway logs
+            logger: true,
+            debug: true,
+            connectionTimeout: 30000, // 30 seconds
+            greetingTimeout: 30000,
+            socketTimeout: 30000
         });
 
         const mailOptions = {
@@ -29,11 +37,12 @@ const sendEmail = async (to, subject, html) => {
         };
 
         const result = await transporter.sendMail(mailOptions);
-        console.log(`[EMAIL] Sent! ID: ${result.messageId}`);
+        console.log(`[EMAIL] SENT SUCCESS! ID: ${result.messageId}`);
         return { success: true };
     } catch (error) {
         console.error('[EMAIL FAIL]:', error.message);
-        return { success: false, message: error.message };
+        // Include host/port in error to see what it attempted
+        return { success: false, message: `${error.message} (attempted smtp.gmail.com:465)` };
     }
 };
 
